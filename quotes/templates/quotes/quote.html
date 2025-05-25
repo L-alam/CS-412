@@ -1,0 +1,13 @@
+{% extends 'quotes/base.html' %}
+
+{% block content %}
+    <h1>Stephen King Quote of the Day</h1>
+    
+    <blockquote>"{{ quote }}"</blockquote>
+    <p class="attribution">- Steven King</p>
+    
+    <img src="{{ image }}" alt="Stephen King">
+    
+    <p class="refresh-message">Refresh the page to see a different quote and image!</p>
+{% endblock %}
+

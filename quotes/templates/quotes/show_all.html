@@ -1,0 +1,16 @@
+{% extends 'quotes/base.html' %}
+
+{% block content %}
+    <h1>All Stephen King Quotes</h1>
+    
+    <h2>Quotes:</h2>
+    {% for quote in quotes %}
+        <blockquote>"{{ quote }}"</blockquote>
+        <p>— Stephen King</p>
+    {% endfor %}
+    
+    <h2>Images:</h2>
+    {% for image in images %}
+        <img src="{{ image }}" alt="Stephen King">
+    {% endfor %}
+{% endblock %}

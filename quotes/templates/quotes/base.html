@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Steven King Quotes</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <style>
+        img {
+            width: 300px;
+            height: 300px;
+            object-fit: cover;
+            display: block;
+            margin: 20px auto;
+        }
+        
+        body {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{% url 'quote' %}">Quote of the Day</a>
+        <a href="{% url 'show_all' %}">Show All</a>
+        <a href="{% url 'about' %}">About</a>
+    </nav>
+    
+    <div class="content">
+        {% block content %}
+        {% endblock %}
+    </div>
+</body>
+</html>
