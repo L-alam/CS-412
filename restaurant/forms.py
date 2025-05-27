@@ -1,14 +1,13 @@
 from django import forms
 
 class OrderForm(forms.Form):
-    # Menu items
+    # Menu 
     classic_cheese = forms.BooleanField(required=False, label='Classic Cheese ($8.99)')
     steak_cheese = forms.BooleanField(required=False, label='Steak and Cheese ($11.99)')
     waffle_fries = forms.BooleanField(required=False, label='Waffle Fries ($4.99)')
     milk_shake = forms.BooleanField(required=False, label='Milk Shake ($5.99)')
     
-    # Milk shake toppings
-    whipped_cream = forms.BooleanField(required=False, label='Extra Whipped Cream (+$0.75)')
+    # Milk Shake
     chocolate_chips = forms.BooleanField(required=False, label='Chocolate Chips (+$1.25)')
     cherry_on_top = forms.BooleanField(required=False, label='Cherry on Top (+$0.50)')
     cookie_crumbs = forms.BooleanField(required=False, label='Cookie Crumbs (+$1.00)')

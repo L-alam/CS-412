@@ -20,10 +20,9 @@ def main(request):
 
 def order(request):
     """Order page with Django form"""
-    # Pick a random daily special
+    
     todays_special = random.choice(daily_specials)
     
-    # Create the form instance
     form = OrderForm()
     
     context = {
@@ -39,10 +38,8 @@ def confirmation(request):
         form = OrderForm(request.POST)
         
         if form.is_valid():
-            # Get cleaned data from the form
             cleaned_data = form.cleaned_data
             
-            # Menu items with prices
             menu_items = {
                 'classic_cheese': {'name': 'Classic Cheese', 'price': 8.99},
                 'steak_cheese': {'name': 'Steak and Cheese', 'price': 11.99},
@@ -50,7 +47,6 @@ def confirmation(request):
                 'milk_shake': {'name': 'Milk Shake', 'price': 5.99},
             }
             
-            # Toppings with prices
             toppings = {
                 'whipped_cream': {'name': 'Extra Whipped Cream', 'price': 0.75},
                 'chocolate_chips': {'name': 'Chocolate Chips', 'price': 1.25},
@@ -58,31 +54,26 @@ def confirmation(request):
                 'cookie_crumbs': {'name': 'Cookie Crumbs', 'price': 1.00},
             }
             
-            # Process ordered items
             ordered_items = []
             total_price = 0
             
-            # Check regular menu items
             for item_key, item_info in menu_items.items():
                 if cleaned_data.get(item_key):
                     ordered_items.append(item_info)
                     total_price += item_info['price']
             
-            # Check toppings (only if milk shake was ordered)
             if cleaned_data.get('milk_shake'):
                 for topping_key, topping_info in toppings.items():
                     if cleaned_data.get(topping_key):
                         ordered_items.append(topping_info)
                         total_price += topping_info['price']
             
-            # Check daily special
             if cleaned_data.get('daily_special'):
                 special_name = request.POST.get('special_name')
                 special_price = float(request.POST.get('special_price'))
                 ordered_items.append({'name': special_name, 'price': special_price})
                 total_price += special_price
             
-            # Generate random ready time
             current_time = datetime.now()
             minutes_to_add = random.randint(30, 60)
             ready_time = current_time + timedelta(minutes=minutes_to_add)
@@ -99,7 +90,6 @@ def confirmation(request):
             
             return render(request, 'restaurant/confirmation.html', context)
         else:
-            # Form has errors, re-display with errors
             todays_special = random.choice(daily_specials)
             context = {
                 'form': form,
@@ -107,5 +97,4 @@ def confirmation(request):
             }
             return render(request, 'restaurant/order.html', context)
     
-    # If not POST, redirect to order page
     return render(request, 'restaurant/order.html')

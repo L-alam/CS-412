@@ -1,35 +1,18 @@
 {% extends 'restaurant/base.html' %}
 
 {% block content %}
-    <h1>Welcome to Grilled Cheese Co.</h1>
+    <h1>Grilled Cheese Co.</h1>
     
     <h2>About Us</h2>
-    <p>The best grilled cheese sandwiches in town! We use premium ingredients and artisanal breads to create the perfect comfort food experience.</p>
+    <p>The best grilled cheese sandwiches in town!</p>
     
-    <h2>Location & Hours</h2>
-    <p><strong>Address:</strong> 123 Cheese Street, Boston, MA 02215</p>
+    <h2>Hours</h2>
+    <p>Monday - Friday: 11am - 9pm</p>
+    <p>Saturday: 10am - 10pm</p>
+    <p>Sunday: 12pm - 8pm</p>
     
-    <h3>Hours of Operation:</h3>
-    <table border="1" style="margin: 20px auto; border-collapse: collapse;">
-        <tr>
-            <td style="padding: 8px;"><strong>Monday - Friday</strong></td>
-            <td style="padding: 8px;">11:00 AM - 9:00 PM</td>
-        </tr>
-        <tr>
-            <td style="padding: 8px;"><strong>Saturday</strong></td>
-            <td style="padding: 8px;">10:00 AM - 10:00 PM</td>
-        </tr>
-        <tr>
-            <td style="padding: 8px;"><strong>Sunday</strong></td>
-            <td style="padding: 8px;">12:00 PM - 8:00 PM</td>
-        </tr>
-    </table>
+    <h2>Location</h2>
+    <p>123 Cheese Street, Boston, MA</p>
     
-    <div style="text-align: center; margin: 30px 0;">
-        <img src="https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?w=400" alt="Grilled Cheese" style="max-width: 400px; border-radius: 8px;">
-    </div>
-    
-    <div style="text-align: center;">
-        <a href="{% url 'order' %}" style="background-color: #d2691e; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 18px;">Order Now!</a>
-    </div>
+    <p><a href="{% url 'order' %}">Order Now!</a></p>
 {% endblock %}

@@ -7,14 +7,20 @@
 -->
 {% block content %}
 <main class="grid-container">
+
     {% for a in articles %}
     <article>
+
         {% if a.image_url %}
-		<img src="{{a.image_url}}" alt="{{a.image_url}}">
+        <a href="{% url 'article' a.pk %}">
+        <img src="{{a.image_url}}" alt="{{a.image_url}}">
+        </a>
         {% endif %}
         
         <div>
         <h2>{{a.title}}</h2>
+        
+    
         <strong>by {{a.author}} at {{a.published}}</strong>
         <p>
         {{a.text}}
