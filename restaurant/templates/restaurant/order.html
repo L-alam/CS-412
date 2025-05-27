@@ -1,0 +1,91 @@
+{% extends 'restaurant/base.html' %}
+
+{% block content %}
+    <h1>Place Your Order</h1>
+    
+    <form method="post" action="{% url 'confirmation' %}">
+        {% csrf_token %}
+        
+        <h2>Select Your Items:</h2>
+        
+        <!-- Regular Menu Items -->
+        <div style="margin: 20px 0;">
+            {{ form.classic_cheese }} {{ form.classic_cheese.label_tag }}
+            <p style="margin-left: 20px; color: #666; font-size: 14px;">Three-cheese blend on artisan sourdough</p>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            {{ form.steak_cheese }} {{ form.steak_cheese.label_tag }}
+            <p style="margin-left: 20px; color: #666; font-size: 14px;">Tender steak with melted provolone and grilled onions</p>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            {{ form.waffle_fries }} {{ form.waffle_fries.label_tag }}
+            <p style="margin-left: 20px; color: #666; font-size: 14px;">Crispy waffle-cut fries with sea salt</p>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            {{ form.milk_shake }} {{ form.milk_shake.label_tag }}
+            <p style="margin-left: 20px; color: #666; font-size: 14px;">Vanilla, chocolate, or strawberry</p>
+            
+            <!-- Milk shake toppings -->
+            <div style="margin-left: 40px; margin-top: 10px;">
+                <label style="font-size: 14px;">Add toppings:</label><br>
+                {{ form.whipped_cream }} {{ form.whipped_cream.label_tag }}<br>
+                {{ form.chocolate_chips }} {{ form.chocolate_chips.label_tag }}<br>
+                {{ form.cherry_on_top }} {{ form.cherry_on_top.label_tag }}<br>
+                {{ form.cookie_crumbs }} {{ form.cookie_crumbs.label_tag }}
+            </div>
+        </div>
+        
+        <!-- Daily Special -->
+        <h2>Today's Special:</h2>
+        <div style="margin: 20px 0; padding: 15px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
+            {{ form.daily_special }} <label for="{{ form.daily_special.id_for_label }}"><strong>{{ daily_special.name }}</strong> - ${{ daily_special.price }}</label>
+            <p style="margin-left: 20px; color: #666; font-size: 14px;">{{ daily_special.description }}</p>
+            
+            <!-- Hidden fields for daily special -->
+            <input type="hidden" name="special_name" value="{{ daily_special.name }}">
+            <input type="hidden" name="special_price" value="{{ daily_special.price }}">
+        </div>
+        
+        <!-- Special Instructions -->
+        <h2>Special Instructions</h2>
+        {{ form.special_instructions.label_tag }}<br>
+        {{ form.special_instructions }}
+        
+        <!-- Customer Information -->
+        <h2>Customer Information</h2>
+        <div style="margin: 15px 0;">
+            {{ form.customer_name.label_tag }}<br>
+            {{ form.customer_name }}
+            {% if form.customer_name.errors %}
+                <div style="color: red;">{{ form.customer_name.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div style="margin: 15px 0;">
+            {{ form.customer_phone.label_tag }}<br>
+            {{ form.customer_phone }}
+            {% if form.customer_phone.errors %}
+                <div style="color: red;">{{ form.customer_phone.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div style="margin: 15px 0;">
+            {{ form.customer_email.label_tag }}<br>
+            {{ form.customer_email }}
+            {% if form.customer_email.errors %}
+                <div style="color: red;">{{ form.customer_email.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <!-- Submit Button -->
+        <div style="margin: 30px 0; text-align: center;">
+            <button type="submit" style="background-color: #d2691e; color: white; padding: 15px 30px; 
+                                         border: none; border-radius: 5px; font-size: 18px; cursor: pointer;">
+                Place Your Order!
+            </button>
+        </div>
+    </form>
+{% endblock %}

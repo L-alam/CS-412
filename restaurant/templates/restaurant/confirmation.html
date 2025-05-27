@@ -1,0 +1,79 @@
+{% extends 'restaurant/base.html' %}
+
+{% block content %}
+    <h1>Order Confirmation</h1>
+    
+    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 20px; border-radius: 5px; margin: 20px 0;">
+        <h2 style="color: #155724; margin-top: 0;">Thank you for your order, {{ customer_name }}!</h2>
+        <p style="color: #155724;">Your order has been received and is being prepared.</p>
+    </div>
+    
+    <!-- Order Summary -->
+    <h2>Order Summary</h2>
+    {% if ordered_items %}
+        <table border="1" style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+                <tr style="background-color: #f8f9fa;">
+                    <th style="padding: 10px; text-align: left;">Item</th>
+                    <th style="padding: 10px; text-align: right;">Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in ordered_items %}
+                <tr>
+                    <td style="padding: 10px;">{{ item.name }}</td>
+                    <td style="padding: 10px; text-align: right;">${{ item.price }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr style="background-color: #f8f9fa; font-weight: bold;">
+                    <td style="padding: 10px;">Total</td>
+                    <td style="padding: 10px; text-align: right;">${{ total_price }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    {% else %}
+        <p style="color: #dc3545;">No items were selected for your order.</p>
+    {% endif %}
+    
+    <!-- Customer Information -->
+    <h2>Customer Information</h2>
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <p><strong>Name:</strong> {{ customer_name }}</p>
+        <p><strong>Phone:</strong> {{ customer_phone }}</p>
+        <p><strong>Email:</strong> {{ customer_email }}</p>
+        {% if special_instructions %}
+            <p><strong>Special Instructions:</strong> {{ special_instructions }}</p>
+        {% endif %}
+    </div>
+    
+    <!-- Ready Time -->
+    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 5px; margin: 20px 0;">
+        <h3 style="margin-top: 0; color: #856404;">Pickup Information</h3>
+        <p style="color: #856404; font-size: 18px;"><strong>Your order will be ready at: {{ ready_time }}</strong></p>
+        <p style="color: #856404;">Please arrive at our location (123 Cheese Street) at the specified time for pickup.</p>
+    </div>
+    
+    <!-- Order Number -->
+    <div style="text-align: center; margin: 30px 0;">
+        <p style="font-size: 14px; color: #666;">
+            Order placed on {{ "now"|date:"F j, Y \a\\t g:i A" }}
+        </p>
+        <p style="font-size: 12px; color: #999;">
+            Order #GC{{ "now"|date:"YmdHis" }}
+        </p>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{% url 'main' %}" style="background-color: #6c757d; color: white; padding: 10px 20px; 
+                                         text-decoration: none; border-radius: 4px; margin-right: 10px;">
+            Back to Home
+        </a>
+        <a href="{% url 'order' %}" style="background-color: #d2691e; color: white; padding: 10px 20px; 
+                                          text-decoration: none; border-radius: 4px;">
+            Place Another Order
+        </a>
+    </div>
+{% endblock %}
