@@ -3,7 +3,7 @@ from django.db import models
 # Create your models here
 
 class Profile(models.Model):
-    '''Encapsulate the idea of an Facebook Profile Page'''
+    '''Encapsulate the idea of a Facebook Profile Page'''
     
     first_name = models.TextField(blank=False)
     last_name = models.TextField(blank=False)

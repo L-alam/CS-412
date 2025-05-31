@@ -1,7 +1,7 @@
 from django.urls import path
-from .views import ShowAllViews
+from . import views
 
 urlpatterns = [
-    # map the URL (empty string) to the view
-    path('', ShowAllView.as_view(), name='show_all'), # generic class-based view
+    path('', views.ShowAllProfilesView.as_view(), name='show_all_profiles'),
+    path('profile/<int:pk>', views.ShowProfilePageView.as_view(), name='show_profile'),
 ]
