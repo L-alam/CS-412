@@ -1,23 +1,40 @@
-<!-- blog/templates/blog/article.html -->
+<!-- blog/article.html 
+    display a single article on this web page
+-->
 {% extends 'blog/base.html' %}
-<h1>{{article.title}}</h1>
 
 {% block content %}
+<h1>{{article.title}}</h1>
+
 <main class="grid-container">
-    
     <article class="featured">
-        {% if article.image_url %}
-		<img src="{{article.image_url}}" alt="{{article.image_url}}">
-		{% endif %}
-        
+        <img src="{{article.image_url}}" alt="">
         <div>
-        <h2>{{article.title}}</h2>
-        <strong>by {{article.author}} at {{article.published}}</strong>
-        <p>
-        {{article.text}}
-        </p>
+            <h2>{{article.title}}</h2>
+            <h3>by {{article.author}} at {{article.published}}</h3>
+            <p>
+                {{article.text}}
+            </p>
         </div>
+
     </article>
+    
+    <div>
+        <h2>Comments</h2>
+        <h3>
+            <a href="{% url 'create_comment' article.pk %}">Create a comment</a>
+        </h3>
+        <!-- Display the comments about this article -->
+        <!-- {{article.get_all_comments}} -->
+        {% for comment in article.get_all_comments %}
+            <div>
+                <strong>by {{comment.author}} at {{comment.published}}</strong>
+                <p>
+                    {{comment.text}}
+                </p>
+            </div>
+        {% endfor %}
+    </div>
 
 </main>
 {% endblock %}

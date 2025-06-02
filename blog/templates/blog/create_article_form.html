@@ -1,0 +1,18 @@
+<!-- blog/create_article_form.html 
+    display the HTML form to create a new Article object.
+-->
+{% extends 'blog/base.html' %}
+
+{% block content %}
+<h1>Create a new Comment about {{article.title}}</h1>
+
+<!-- display the HTML form -->
+<form action="{% url 'create_article' %}" method="POST">
+    {% csrf_token %}
+    <table>
+    {{form.as_table}}
+    </table>
+
+    <input type="submit" name="submit" value="Submit">
+</form>
+{% endblock %}

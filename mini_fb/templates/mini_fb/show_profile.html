@@ -1,15 +1,14 @@
-<!-- show_profiles.html -->
+<!-- show_profile.html -->
 {% extends 'mini_fb/base.html' %}
-
 {% block content %}
-<div style="background: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto;">
+<div style="background: white; border-radius: 8px; padding: 30px; 2px 4px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto;">
     <div style="text-align: center; margin-bottom: 30px;">
         <img src="{{ profile.pfp_url }}" alt="{{ profile.first_name }} {{ profile.last_name }}" 
              style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid #1877f2;">
         <h1 style="margin: 20px 0 10px 0; color: #333;">{{ profile.first_name }} {{ profile.last_name }}</h1>
     </div>
-
-    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px;">
+    
+    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
         <h3 style="color: #1877f2; margin-top: 0;">Profile Information</h3>
         <table style="width: 100%; border-collapse: collapse;">
             <tr>
@@ -29,6 +28,36 @@
                 <td style="padding: 10px 0;">{{ profile.email }}</td>
             </tr>
         </table>
+    </div>
+    
+    <!-- Status Messages Section -->
+    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="color: #1877f2; margin: 0;">Status Messages</h3>
+            <a href="{% url 'create_status' profile.pk %}" 
+               style="background-color: #1877f2; color: white; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 14px;">
+                Post Status
+            </a>
+        </div>
+        
+        {% for status in profile.get_status_messages %}
+        <div style="background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #1877f2;">
+            <div style="font-size: 14px; color: #666; margin-bottom: 8px;">
+                <strong>{{ status.timestamp|date:"F j, Y \a\t g:i A" }}</strong>
+            </div>
+            <div style="font-size: 16px; color: #333; line-height: 1.4;">
+                {{ status.message }}
+            </div>
+        </div>
+        {% empty %}
+        <div style="text-align: center; padding: 20px;">
+            <p style="color: #666; font-style: italic; margin-bottom: 15px;">No status messages yet.</p>
+            <a href="{% url 'create_status' profile.pk %}" 
+               style="background-color: #42b883; color: white; padding: 10px 20px; none; border-radius: 6px; font-weight: bold;">
+                Create status
+            </a>
+        </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}
