@@ -5,37 +5,51 @@
 <head>
     <title>Mini FB</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body { 
             font-family: Arial, sans-serif; 
-            margin: 0; 
-            padding: 20px; 
-            background-color: #f0f2f5;
+            background-color: #e9ebee;
+            color: #333;
         }
+        
         nav { 
-            background-color: #1877f2; 
-            padding: 15px; 
+            background-color: #3b5998; 
+            padding: 15px 0;
             margin-bottom: 20px;
-            border-radius: 8px;
         }
+        
+        nav .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
         nav a { 
             color: white; 
             margin-right: 20px; 
-            font-weight: bold;
             text-decoration: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            transition: background-color 0.3s;
         }
-        h1 {
-            color: #333;
-            text-align: center;
+        
+        nav a:hover {
+            text-decoration: underline;
+        }
+        
+        .container {
+            min-height: calc(100vh - 100px);
         }
     </style>
 </head>
 <body>
     <nav>
-        <a href="{% url 'show_all_profiles' %}">All Profiles</a>
-        <a href="{% url 'create_profile' %}">Create Profile</a>
+        <div class="nav-content">
+            <a href="{% url 'show_all_profiles' %}">All Profiles</a>
+            <a href="{% url 'create_profile' %}">Create Profile</a>
+        </div>
     </nav>
     
     <div class="container">

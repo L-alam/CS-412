@@ -1,63 +1,241 @@
 <!-- show_profile.html -->
 {% extends 'mini_fb/base.html' %}
 {% block content %}
-<div style="background: white; border-radius: 8px; padding: 30px; 2px 4px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto;">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <img src="{{ profile.pfp_url }}" alt="{{ profile.first_name }} {{ profile.last_name }}" 
-             style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 4px solid #1877f2;">
-        <h1 style="margin: 20px 0 10px 0; color: #333;">{{ profile.first_name }} {{ profile.last_name }}</h1>
+<div class="profile-container">
+    <div class="profile-header">
+        <img src="{{ profile.pfp_url }}" alt="{{ profile.first_name }} {{ profile.last_name }}" class="profile-pic">
+        <h1>{{ profile.first_name }} {{ profile.last_name }}</h1>
+        <a href="{% url 'news_feed' profile.pk %}" class="btn btn-primary">View News Feed</a>
     </div>
     
-    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-        <h3 style="color: #1877f2; margin-top: 0;">Profile Information</h3>
-        <table style="width: 100%; border-collapse: collapse;">
+    <div class="info-section">
+        <h3>Profile Information</h3>
+        <table>
             <tr>
-                <td style="padding: 10px 0; font-weight: bold; color: #555; width: 30%;">First Name:</td>
-                <td style="padding: 10px 0;">{{ profile.first_name }}</td>
+                <td><strong>First Name:</strong></td>
+                <td>{{ profile.first_name }}</td>
             </tr>
             <tr>
-                <td style="padding: 10px 0; font-weight: bold; color: #555;">Last Name:</td>
-                <td style="padding: 10px 0;">{{ profile.last_name }}</td>
+                <td><strong>Last Name:</strong></td>
+                <td>{{ profile.last_name }}</td>
             </tr>
             <tr>
-                <td style="padding: 10px 0; font-weight: bold; color: #555;">City:</td>
-                <td style="padding: 10px 0;">{{ profile.city }}</td>
+                <td><strong>City:</strong></td>
+                <td>{{ profile.city }}</td>
             </tr>
             <tr>
-                <td style="padding: 10px 0; font-weight: bold; color: #555;">Email:</td>
-                <td style="padding: 10px 0;">{{ profile.email }}</td>
+                <td><strong>Email:</strong></td>
+                <td>{{ profile.email }}</td>
             </tr>
         </table>
+        <div class="actions">
+            <a href="{% url 'update_profile' profile.pk %}" class="btn btn-secondary">Update Profile</a>
+        </div>
     </div>
     
-    <!-- Status Messages Section -->
-    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h3 style="color: #1877f2; margin: 0;">Status Messages</h3>
-            <a href="{% url 'create_status' profile.pk %}" 
-               style="background-color: #1877f2; color: white; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 14px;">
-                Post Status
-            </a>
+    <div class="friends-section">
+        <div class="section-header">
+            <h3>Friends</h3>
+            <a href="{% url 'friend_suggestions' profile.pk %}" class="btn btn-small">Find Friends</a>
+        </div>
+        
+        <div class="friends-grid">
+            {% for friend in profile.get_friends %}
+            <div class="friend-item">
+                <a href="{% url 'show_profile' friend.pk %}">
+                    <img src="{{ friend.pfp_url }}" alt="{{ friend.first_name }} {{ friend.last_name }}">
+                    <p>{{ friend.first_name }} {{ friend.last_name }}</p>
+                </a>
+            </div>
+            {% empty %}
+            <p class="empty-message">No friends yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="status-section">
+        <div class="section-header">
+            <h3>Status Messages</h3>
+            <a href="{% url 'create_status' profile.pk %}" class="btn btn-small">Post Status</a>
         </div>
         
         {% for status in profile.get_status_messages %}
-        <div style="background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #1877f2;">
-            <div style="font-size: 14px; color: #666; margin-bottom: 8px;">
-                <strong>{{ status.timestamp|date:"F j, Y \a\t g:i A" }}</strong>
+        <div class="status-item">
+            <div class="status-date">{{ status.timestamp|date:"F j, Y \a\t g:i A" }}</div>
+            <div class="status-message">{{ status.message }}</div>
+            
+            {% for img in status.get_images %}
+            <div class="status-image">
+                <img src='{{img.image_file.url}}' alt='Image'>
+                {% if img.caption %}
+                    <p class="image-caption">{{ img.caption }}</p>
+                {% endif %}
             </div>
-            <div style="font-size: 16px; color: #333; line-height: 1.4;">
-                {{ status.message }}
+            {% endfor %}
+            
+            <div class="status-actions">
+                <a href="{% url 'update_status' status.pk %}">Update</a>
+                <a href="{% url 'delete_status' status.pk %}" class="delete-link">Delete</a>
             </div>
         </div>
         {% empty %}
-        <div style="text-align: center; padding: 20px;">
-            <p style="color: #666; font-style: italic; margin-bottom: 15px;">No status messages yet.</p>
-            <a href="{% url 'create_status' profile.pk %}" 
-               style="background-color: #42b883; color: white; padding: 10px 20px; none; border-radius: 6px; font-weight: bold;">
-                Create status
-            </a>
+        <div class="empty-state">
+            <p>No status messages yet.</p>
+            <a href="{% url 'create_status' profile.pk %}" class="btn btn-primary">Create status</a>
         </div>
         {% endfor %}
     </div>
 </div>
+
+<style>
+.profile-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.profile-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.profile-pic {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 15px;
+}
+
+.info-section, .friends-section, .status-section {
+    background: #f5f5f5;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.friends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 15px;
+}
+
+.friend-item {
+    text-align: center;
+}
+
+.friend-item img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.friend-item p {
+    margin-top: 5px;
+    font-size: 14px;
+}
+
+.status-item {
+    background: white;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+}
+
+.status-date {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.status-message {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.status-image img {
+    max-width: 100%;
+    margin-top: 10px;
+    border-radius: 5px;
+}
+
+.status-actions {
+    margin-top: 10px;
+}
+
+.status-actions a {
+    margin-right: 15px;
+    font-size: 14px;
+}
+
+.delete-link {
+    color: #d9534f;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.btn-primary {
+    background: #337ab7;
+    color: white;
+}
+
+.btn-secondary {
+    background: #5cb85c;
+    color: white;
+}
+
+.btn-small {
+    padding: 5px 15px;
+    font-size: 14px;
+    background: #337ab7;
+    color: white;
+}
+
+.empty-message {
+    color: #666;
+    font-style: italic;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 30px;
+}
+
+.actions {
+    text-align: center;
+    margin-top: 15px;
+}
+
+table {
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+table td {
+    padding: 8px 0;
+}
+
+a {
+    color: #337ab7;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+</style>
 {% endblock %}

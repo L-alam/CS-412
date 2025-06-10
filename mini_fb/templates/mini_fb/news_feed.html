@@ -1,0 +1,139 @@
+<!-- mini_fb/templates/mini_fb/news_feed.html -->
+{% extends 'mini_fb/base.html' %}
+
+{% block content %}
+<div class="feed-container">
+    <div class="feed-header">
+        <h1>News Feed</h1>
+        <a href="{% url 'show_profile' profile.pk %}" class="back-btn">Back to Profile</a>
+    </div>
+    
+    <div class="feed-posts">
+        {% for status in profile.get_news_feed %}
+        <div class="post">
+            <div class="post-header">
+                <a href="{% url 'show_profile' status.profile.pk %}" class="author-link">
+                    <img src="{{ status.profile.pfp_url }}" alt="{{ status.profile.first_name }}">
+                    <div class="author-info">
+                        <strong>{{ status.profile.first_name }} {{ status.profile.last_name }}</strong>
+                        <span>{{ status.timestamp|date:"F j, Y \a\t g:i A" }}</span>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="post-content">
+                {{ status.message }}
+            </div>
+            
+            {% for img in status.get_images %}
+            <div class="post-image">
+                <img src='{{img.image_file.url}}' alt='Image'>
+                {% if img.caption %}
+                    <p class="caption">{{ img.caption }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% empty %}
+        <div class="no-posts">
+            <p>No posts to show in your news feed.</p>
+            <p>Add some friends to see their posts!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.feed-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.feed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.feed-header h1 {
+    font-size: 28px;
+}
+
+.back-btn {
+    background: #5cb85c;
+    color: white;
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 3px;
+}
+
+.feed-posts {
+    margin-top: 20px;
+}
+
+.post {
+    background: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.post-header {
+    margin-bottom: 15px;
+}
+
+.author-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.author-link img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.author-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.author-info span {
+    font-size: 13px;
+    color: #666;
+}
+
+.post-content {
+    font-size: 15px;
+    line-height: 1.5;
+    margin-bottom: 10px;
+}
+
+.post-image {
+    margin-top: 10px;
+}
+
+.post-image img {
+    max-width: 100%;
+    border-radius: 3px;
+}
+
+.caption {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.no-posts {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+</style>
+{% endblock %}
