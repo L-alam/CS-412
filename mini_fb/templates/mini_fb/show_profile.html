@@ -5,7 +5,9 @@
     <div class="profile-header">
         <img src="{{ profile.pfp_url }}" alt="{{ profile.first_name }} {{ profile.last_name }}" class="profile-pic">
         <h1>{{ profile.first_name }} {{ profile.last_name }}</h1>
+        {% if is_owner %}
         <a href="{% url 'news_feed' profile.pk %}" class="btn btn-primary">View News Feed</a>
+        {% endif %}
     </div>
     
     <div class="info-section">
@@ -28,15 +30,19 @@
                 <td>{{ profile.email }}</td>
             </tr>
         </table>
+        {% if is_owner %}
         <div class="actions">
             <a href="{% url 'update_profile' profile.pk %}" class="btn btn-secondary">Update Profile</a>
         </div>
+        {% endif %}
     </div>
     
     <div class="friends-section">
         <div class="section-header">
             <h3>Friends</h3>
+            {% if is_owner %}
             <a href="{% url 'friend_suggestions' profile.pk %}" class="btn btn-small">Find Friends</a>
+            {% endif %}
         </div>
         
         <div class="friends-grid">
@@ -56,7 +62,9 @@
     <div class="status-section">
         <div class="section-header">
             <h3>Status Messages</h3>
+            {% if is_owner %}
             <a href="{% url 'create_status' profile.pk %}" class="btn btn-small">Post Status</a>
+            {% endif %}
         </div>
         
         {% for status in profile.get_status_messages %}
@@ -73,15 +81,19 @@
             </div>
             {% endfor %}
             
+            {% if is_owner %}
             <div class="status-actions">
                 <a href="{% url 'update_status' status.pk %}">Update</a>
                 <a href="{% url 'delete_status' status.pk %}" class="delete-link">Delete</a>
             </div>
+            {% endif %}
         </div>
         {% empty %}
         <div class="empty-state">
             <p>No status messages yet.</p>
+            {% if is_owner %}
             <a href="{% url 'create_status' profile.pk %}" class="btn btn-primary">Create status</a>
+            {% endif %}
         </div>
         {% endfor %}
     </div>

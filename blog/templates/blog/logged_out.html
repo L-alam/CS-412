@@ -1,0 +1,58 @@
+<!-- mini_fb/templates/mini_fb/logged_out.html -->
+{% extends 'mini_fb/base.html' %}
+
+{% block content %}
+<div class="logout-container">
+    <h1>You have been logged out</h1>
+    <p>Thank you for using Mini Facebook!</p>
+    
+    <div class="logout-actions">
+        <a href="{% url 'login' %}" class="btn-login">Log in again</a>
+        <a href="{% url 'show_all_profiles' %}" class="btn-home">View All Profiles</a>
+    </div>
+</div>
+
+<style>
+.logout-container {
+    max-width: 500px;
+    margin: 100px auto;
+    padding: 40px;
+    background: white;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.logout-container h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.logout-container p {
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 18px;
+}
+
+.logout-actions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.btn-login {
+    background: #4267B2;
+    color: white;
+    padding: 10px 25px;
+    text-decoration: none;
+    border-radius: 3px;
+}
+
+.btn-home {
+    background: #42b883;
+    color: white;
+    padding: 10px 25px;
+    text-decoration: none;
+    border-radius: 3px;
+}
+</style>
+{% endblock %}

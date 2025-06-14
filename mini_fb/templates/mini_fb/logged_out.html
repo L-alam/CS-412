@@ -1,0 +1,104 @@
+<!-- mini_fb/templates/mini_fb/logged_out.html -->
+{% extends 'mini_fb/base.html' %}
+
+{% block content %}
+<div class="logout-container">
+    <div class="logout-box">
+        <div class="checkmark-circle">
+            <div class="checkmark"></div>
+        </div>
+        
+        <h1>You have been logged out</h1>
+        <p>Your session has been successfully ended.</p>
+        
+        <div class="action-buttons">
+            <a href="{% url 'login' %}" class="login-btn">Log in again</a>
+            <a href="{% url 'show_all_profiles' %}" class="home-btn">Back to home</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.logout-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+}
+
+.logout-box {
+    background: white;
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    max-width: 500px;
+    width: 100%;
+}
+
+.logout-box h1 {
+    color: #3b5998;
+    margin-bottom: 15px;
+}
+
+.logout-box p {
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.login-btn, .home-btn {
+    display: inline-block;
+    padding: 12px 25px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.login-btn {
+    background: #3b5998;
+    color: white;
+}
+
+.login-btn:hover {
+    background: #2d4373;
+}
+
+.home-btn {
+    background: #f5f5f5;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.home-btn:hover {
+    background: #e9e9e9;
+}
+
+/* Checkmark animation */
+.checkmark-circle {
+    width: 80px;
+    height: 80px;
+    position: relative;
+    background: #f8f8f8;
+    border-radius: 50%;
+    margin: 0 auto 30px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.checkmark {
+    width: 40px;
+    height: 20px;
+    border-left: 4px solid #5cb85c;
+    border-bottom: 4px solid #5cb85c;
+    transform: rotate(-45deg);
+    margin-top: -10px;
+}
+</style>
+{% endblock %}

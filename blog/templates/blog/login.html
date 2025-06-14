@@ -1,0 +1,85 @@
+<!-- mini_fb/templates/mini_fb/login.html -->
+{% extends 'mini_fb/base.html' %}
+
+{% block content %}
+<div class="login-container">
+    <h1>Login</h1>
+    
+    <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <table class="login-form">
+            {{ form.as_table }}
+        </table>
+        
+        <div class="form-actions">
+            <input type="submit" value="Login" class="login-btn">
+        </div>
+        
+        <!-- Hidden field for redirect after login -->
+        {% if request.GET.next %}
+        <input type="hidden" name="next" value="{{ request.GET.next }}">
+        {% else %}
+        <input type="hidden" name="next" value="{% url 'show_all_profiles' %}">
+        {% endif %}
+    </form>
+    
+    <hr>
+    <p>Don't have an account? Create a profile to get started!</p>
+</div>
+
+<style>
+.login-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 5px;
+}
+
+.login-container h1 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.login-form {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.login-form td {
+    padding: 10px 5px;
+}
+
+.login-form input[type="text"],
+.login-form input[type="password"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.form-actions {
+    text-align: center;
+}
+
+.login-btn {
+    background: #4267B2;
+    color: white;
+    padding: 10px 30px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.login-btn:hover {
+    background: #365899;
+}
+
+hr {
+    margin: 30px 0 20px 0;
+    border: none;
+    border-top: 1px solid #ddd;
+}
+</style>
+{% endblock %}

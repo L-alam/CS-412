@@ -27,15 +27,36 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
-        nav a { 
+        nav .nav-links a { 
             color: white; 
             margin-right: 20px; 
             text-decoration: none;
         }
         
         nav a:hover {
+            text-decoration: underline;
+        }
+        
+        .user-info {
+            color: white;
+            font-size: 14px;
+        }
+        
+        .logout-form {
+            display: inline;
+        }
+        
+        .logout-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
             text-decoration: underline;
         }
         
@@ -47,8 +68,29 @@
 <body>
     <nav>
         <div class="nav-content">
-            <a href="{% url 'show_all_profiles' %}">All Profiles</a>
-            <a href="{% url 'create_profile' %}">Create Profile</a>
+            <div class="nav-links">
+                <a href="{% url 'show_all_profiles' %}">All Profiles</a>
+                
+                {% if request.user.is_authenticated %}
+                    {% if request.user.profile_set.all.first %}
+                        <a href="{% url 'show_profile' request.user.profile_set.all.first.pk %}">My Profile</a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'create_profile' %}">Create Profile</a>
+                {% endif %}
+            </div>
+            
+            <div class="user-info">
+                {% if request.user.is_authenticated %}
+                    Logged in as: {{ request.user.username }}
+                    <form class="logout-form" action="{% url 'logout' %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="logout-btn">Logout</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}">Login</a>
+                {% endif %}
+            </div>
         </div>
     </nav>
     
