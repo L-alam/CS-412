@@ -1,0 +1,29 @@
+{% extends 'voter_analytics/base.html' %}
+
+{% block content %}
+
+<h2>{{ voter.first_name }} {{ voter.last_name }}</h2>
+
+<table>
+    <tr><td>Address:</td><td>{{ voter.get_full_address }}</td></tr>
+    <tr><td>Born:</td><td>{{ voter.date_of_birth|date:"F j, Y" }}</td></tr>
+    <tr><td>Registered:</td><td>{{ voter.date_of_registration|date:"F j, Y" }}</td></tr>
+    <tr><td>Party:</td><td>{{ voter.party_affiliation }}</td></tr>
+    <tr><td>Precinct:</td><td>{{ voter.precinct_number }}</td></tr>
+    <tr><td>Voter Score:</td><td>{{ voter.voter_score }}/5</td></tr>
+</table>
+
+<h3>Voting History</h3>
+<ul>
+    <li>2020 State: {% if voter.v20state %}Yes{% else %}No{% endif %}</li>
+    <li>2021 Town: {% if voter.v21town %}Yes{% else %}No{% endif %}</li>
+    <li>2021 Primary: {% if voter.v21primary %}Yes{% else %}No{% endif %}</li>
+    <li>2022 General: {% if voter.v22general %}Yes{% else %}No{% endif %}</li>
+    <li>2023 Town: {% if voter.v23town %}Yes{% else %}No{% endif %}</li>
+</ul>
+
+<p><a href="https://maps.google.com/maps?q={{ voter.get_full_address|urlencode }}" target="_blank">View on Google Maps</a></p>
+
+<p><a href="{% url 'voters' %}">&larr; Back to voter list</a></p>
+
+{% endblock %}

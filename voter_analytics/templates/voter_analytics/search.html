@@ -1,0 +1,73 @@
+<div class="search-box">
+    <h3>Search Voters</h3>
+    <form>
+        <table>
+            <tr>
+                <td>Party:</td>
+                <td>
+                    <select name="party_affiliation">
+                        <option value="">All Parties</option>
+                        <option value="D">Democrat</option>
+                        <option value="R">Republican</option>
+                        <option value="U">Unenrolled</option>
+                        <option value="I">Independent</option>
+                        <option value="L">Libertarian</option>
+                        <option value="G">Green</option>
+                    </select>
+                </td>
+                <td>Birth Year:</td>
+                <td>
+                    <select name="min_birth_year">
+                        <option value="">From</option>
+                        <option value="1930">1930</option>
+                        <option value="1940">1940</option>
+                        <option value="1950">1950</option>
+                        <option value="1960">1960</option>
+                        <option value="1970">1970</option>
+                        <option value="1980">1980</option>
+                        <option value="1990">1990</option>
+                        <option value="2000">2000</option>
+                    </select>
+                    to
+                    <select name="max_birth_year">
+                        <option value="">To</option>
+                        <option value="1950">1950</option>
+                        <option value="1960">1960</option>
+                        <option value="1970">1970</option>
+                        <option value="1980">1980</option>
+                        <option value="1990">1990</option>
+                        <option value="2000">2000</option>
+                        <option value="2010">2010</option>
+                        <option value="2020">2020</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>Voter Score:</td>
+                <td>
+                    <select name="voter_score">
+                        <option value="">Any Score</option>
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </td>
+                <td>Voted in:</td>
+                <td>
+                    <input type="checkbox" name="v20state" value="1"> 2020 State
+                    <input type="checkbox" name="v21town" value="1"> 2021 Town
+                    <input type="checkbox" name="v22general" value="1"> 2022 General
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <input type="submit" value="Search">
+                    <a href="{% url 'voters' %}">Clear</a>
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
