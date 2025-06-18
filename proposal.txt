@@ -85,3 +85,4 @@ Screen flow:
 	"John likes this accommodation for [destination]"
 	"John prefers this flight"
 	"John added two activities to [trip] Timeline
+
