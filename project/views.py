@@ -24,8 +24,11 @@ class CreateTripView(CreateView):
         return reverse('show_all')
 
 
-#class ShowTripDetailView(DetailView):
-    
+class ShowTripDetailView(DetailView):
+    model = Trip
+    template_name = 'project/show_trip.html'
+    context_object_name = 'trip'
+
 
 
 
