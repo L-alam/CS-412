@@ -38,14 +38,37 @@ class Profile(models.Model):
 
 
 class Plan(models.Model):
-    trip = models.ForeignKey("Trip", on_delete=models.CASCADE, related_name="trip_plan")
+    trip = models.ForeignKey("Trip", on_delete=models.CASCADE, related_name="plans")
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    name = models.TextField(blank=False, help_text="e.g., 'Option A', 'Beach Route', 'Budget Plan'")
+    
+    #plan selection
+    is_selected = models.BooleanField(default=False)  # Mark the chosen plan
+    
+    # Optional for now
+    estimated_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    
+    def __str__(self):
+        return f'{self.name} for {self.trip.name}'
+    
+    class Meta:
+        ordering = ['-created_date']
 
 
 
 class Destination(models.Model):
-    plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="destination")
+    plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="destinations")
     city = models.TextField(blank=False)
     country = models.TextField(blank=False)
     
+    #Extra destination details
+    arrival_date = models.DateTimeField(null=True, blank=True)
+    departure_date = models.DateTimeField(null=True, blank=True)
+    nights_staying = models.IntegerField(null=True, blank=True)
     
+    #For multi-city trips
+    order = models.IntegerField(default=1, help_text="Order of visit in this plan")
     
+    # Optional details
+    notes = models.TextField(blank=True)
+    estimated_cost = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
