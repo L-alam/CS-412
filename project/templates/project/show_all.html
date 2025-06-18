@@ -1,0 +1,21 @@
+<!-- templates/show_all.html -->
+
+{% extends 'project/base.html' %}
+<h1>Showing all Travel Destinations</h1>
+
+{% block content %}
+<main class="grid-container">
+
+    {% for d in trips %}
+        <div>
+            <h2>{{d.name}}</h2>
+            <strong>Going to {{d.location}}</strong>
+            <p>
+            
+            from {{d.start_date.date}} to {{d.end_date.date}}
+            </p>
+        </div>
+
+    {% endfor %}
+</main>
+{% endblock %}
