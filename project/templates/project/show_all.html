@@ -1,21 +1,53 @@
-<!-- templates/show_all.html -->
-
+<!-- project/templates/project/show_all.html -->
 {% extends 'project/base.html' %}
-<h1>Showing all Travel Destinations</h1>
 
 {% block content %}
-<main class="grid-container">
+<div class="page-header">
+    <h1>My Trips</h1>
+    <p>Plan and organize your upcoming adventures</p>
+</div>
 
-    {% for d in trips %}
-        <div>
-            <h2>{{d.name}}</h2>
-            <strong>Going to {{d.location}}</strong>
-            <p>
-            
-            from {{d.start_date.date}} to {{d.end_date.date}}
-            </p>
+<div class="trips-grid">
+    {% for trip in trips %}
+    <div class="trip-card">
+        <div class="trip-card-header">
+            <h3>{{ trip.name }}</h3>
+            <div class="location">Going to {{ trip.location }}</div>
         </div>
-
+        <div class="trip-card-body">
+            <div class="trip-dates">
+                <div class="date-item">
+                    <div class="date-label">Start</div>
+                    <div class="date-value">{{ trip.start_date|date:"M j, Y" }}</div>
+                </div>
+                <div class="date-item">
+                    <div class="date-label">End</div>
+                    <div class="date-value">{{ trip.end_date|date:"M j, Y" }}</div>
+                </div>
+            </div>
+            <div class="trip-duration">
+                {% with days=trip.end_date|timeuntil:trip.start_date %}
+                    {% if days %}{{ days }}{% else %}Same day{% endif %}
+                {% endwith %}
+            </div>
+            <div class="trip-actions">
+                <a href="#" class="btn btn-primary">View Details</a>
+                <a href="#" class="btn btn-secondary">Edit</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <h3>No trips yet</h3>
+        <p>Start planning your next adventure!</p>
+        <a href="#" class="add-trip-btn">+ Create Your First Trip</a>
+    </div>
     {% endfor %}
-</main>
+</div>
+
+{% if trips %}
+<div class="text-center mt-40">
+    <a href="#" class="add-trip-btn">+ Create New Trip</a>
+</div>
+{% endif %}
 {% endblock %}

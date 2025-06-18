@@ -1,23 +1,25 @@
-<!-- templates/base.html -->
-<!-- blog/templates/blog/base.html -->
+<!-- project/templates/project/base.html -->
 {% load static %}
+<!DOCTYPE html>
 <html>
-    <head>
-        <title>Trip Planner</title>
-        <link rel="stylesheet" href="{% static 'styles-blog.css' %}">
-    </head>
-    <body>
-        <header>
-            <h1>Trip Planner</h1>
-            <nav>
-                <ul>
-                    <li><a href="{% url 'show_all' %}">Show All</a></li>
-                </ul>
-            </nav>
-        </header>
+<head>
+    <title>Trip Planner</title>
+    <link rel="stylesheet" href="{% static 'project/css/styles.css' %}">
+</head>
+<body>
+    <nav>
+        <div class="nav-content">
+            <a href="{% url 'show_all' %}" class="nav-brand">Trip Planner</a>
+            <div class="nav-links">
+                <a href="{% url 'show_all' %}" class="active">My Trips</a>
+                <a href="#">My Friends</a>
+            </div>
+        </div>
+    </nav>
     
-    {% block content %}
-    {% endblock %}    
-  
-    </body>
+    <div class="container">
+        {% block content %}
+        {% endblock %}
+    </div>
+</body>
 </html>
