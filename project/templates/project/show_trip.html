@@ -20,7 +20,7 @@
         {% endfor %}
         
         <!-- Always show the create new plan button -->
-        <button class="plan-btn new-plan-btn">+ Create New Plan</button>
+        <button class="plan-btn new-plan-btn" onclick="location.href='{% url 'create_plan' trip.pk %}'">+ Create New Plan</button>
     </div>
 </div>
 

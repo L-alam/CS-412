@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from django.views.generic import ListView, DetailView, CreateView 
-from .models import Trip
-from .forms import CreateTripForm
+from .models import *
+from .forms import CreateTripForm, CreatePlanForm
 from django.urls import reverse
+from django.shortcuts import get_object_or_404
 
 # Create your views here.
 
@@ -28,6 +29,27 @@ class ShowTripDetailView(DetailView):
     model = Trip
     template_name = 'project/show_trip.html'
     context_object_name = 'trip'
+
+
+class CreatePlanView(CreateView):
+    model = Plan
+    template_name = 'project/create_plan_form.html'
+    form_class = CreatePlanForm
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['trip'] = get_object_or_404(Trip, pk=self.kwargs['trip_pk'])
+        return context
+    
+    def form_valid(self, form):
+        # Set the trip before saving
+        trip = get_object_or_404(Trip, pk=self.kwargs['trip_pk'])
+        form.instance.trip = trip
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse('show_trip', kwargs={'pk': self.kwargs['trip_pk']})
+    
 
 
 

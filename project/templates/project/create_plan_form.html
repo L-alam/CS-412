@@ -1,0 +1,117 @@
+<!-- project/templates/project/create_plan_form.html -->
+{% extends 'project/base.html' %}
+
+{% block content %}
+<div class="form-container">
+    <h1>Draft a Plan</h1>
+    <p>Create a new plan for your trip</p>
+    
+    <form method="POST" id="plan-form">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="{{ form.name.id_for_label }}">Plan Name:</label>
+            {{ form.name }}
+        </div>
+        
+        <!-- Destinations Section -->
+        <div class="destinations-section">
+            <h3>Destinations</h3>
+            <div id="destinations-container">
+                <div class="destination-item">
+                    <div class="form-group">
+                        <label>City:</label>
+                        <input type="text" name="destination_city_1" placeholder="e.g., Paris" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Country:</label>
+                        <input type="text" name="destination_country_1" placeholder="e.g., France" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes (optional):</label>
+                        <textarea name="destination_notes_1" placeholder="Any special notes about this destination"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="button" id="add-destination-btn" class="btn btn-secondary">+ Add Another Destination</button>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create Plan</button>
+            <a href="{% url 'show_trip' trip.pk %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+let destinationCount = 1;
+
+document.getElementById('add-destination-btn').addEventListener('click', function() {
+    destinationCount++;
+    
+    const container = document.getElementById('destinations-container');
+    const newDestination = document.createElement('div');
+    newDestination.className = 'destination-item';
+    newDestination.innerHTML = `
+        <hr>
+        <div class="form-group">
+            <label>City:</label>
+            <input type="text" name="destination_city_${destinationCount}" placeholder="e.g., Rome" required>
+        </div>
+        <div class="form-group">
+            <label>Country:</label>
+            <input type="text" name="destination_country_${destinationCount}" placeholder="e.g., Italy" required>
+        </div>
+        <div class="form-group">
+            <label>Notes (optional):</label>
+            <textarea name="destination_notes_${destinationCount}" placeholder="Any special notes about this destination"></textarea>
+        </div>
+        <button type="button" class="remove-destination-btn btn btn-danger btn-small">Remove</button>
+    `;
+    
+    container.appendChild(newDestination);
+    
+    // Add remove functionality
+    newDestination.querySelector('.remove-destination-btn').addEventListener('click', function() {
+        newDestination.remove();
+    });
+});
+</script>
+
+<style>
+.destinations-section {
+    margin: 30px 0;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 5px;
+}
+
+.destinations-section h3 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.destination-item {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+.destination-item hr {
+    margin: 15px 0;
+    border: none;
+    border-top: 1px solid #eee;
+}
+
+.remove-destination-btn {
+    margin-top: 10px;
+}
+
+#add-destination-btn {
+    margin-top: 15px;
+}
+</style>
+{% endblock %}
