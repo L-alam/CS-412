@@ -1,0 +1,87 @@
+Group Trip Planner Application Proposal
+My project will model a collaborative group trip planning application where multiple users can organize and plan trips together. Groups will be able to vote on destinations, compare accommodation options, track flight preferences, and monitor shared expenses and budgets. Users can create accounts, be invited to join trip planning groups, and collaborate on trip decisions through voting and expense tracking features.
+The required data models for this application are:
+User:
+
+first_name (text)
+last_name (text)
+email (text)
+phone_number (text)
+profile_picture (image file)
+
+Trip:
+
+trip_name (text)
+description (text)
+start_date (date)
+end_date (date)
+created_date (date)
+status (choice of: "planning", "confirmed", "completed")
+budget_limit (number)
+
+TripMember:
+
+trip (Foreign Key to Trip)
+user (Foreign Key to User)
+role (choice of: "organizer", "member")
+joined_date (date)
+
+DestinationVote:
+
+trip (Foreign Key to Trip)
+user (Foreign Key to User)
+destination_name (text)
+country (text)
+vote_count (number)
+suggested_date (date)
+
+Accommodation:
+
+trip (Foreign Key to Trip)
+suggested_by (Foreign Key to User)
+name (text)
+location (text)
+price_per_night (number)
+capacity (number)
+booking_url (text)
+image (image file)
+votes (number)
+
+Expense:
+
+trip (Foreign Key to Trip)
+added_by (Foreign Key to User)
+description (text)
+amount (number)
+category (choice of: "flights", "accommodation", "food", "activities", "other")
+date_added (date)
+is_shared (boolean)
+
+Note: This design allows multiple users to collaborate on trip planning, with voting and expense tracking. The TripMember model creates the many-to-many relationship between Users and Trips, while other models track the collaborative decision-making process for destinations, accommodations, and shared expenses.
+
+
+Screen flow:
+
+- Create an account --> First Name, Last Name, Email, (random emoji / random avatar)
+- Sign in --> See all your groups on one side and activity stream on other side
+
+- Create a new group --> Name the group, Invite others with email
+				--> Pick a Potential Destination --> create a trip
+
+- Click onto a group
+	Choose a trip --> See all potential destinations --> Choose your favorite
+	Click on Trip:
+		Destinations
+		Flights
+		Housing
+			--> Select Housing Choices
+			--> Make Notes (Pros/Cons)
+			--> Star your favorites
+		Itinerary / Timeline
+			--> Comment/Notes Section
+
+- Create a summary to post to group stream
+	"John likes [trip]
+	"John likes this accommodation for [destination]"
+	"John prefers this flight"
+	"John added two activities to [trip] Timeline

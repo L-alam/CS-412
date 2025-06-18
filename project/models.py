@@ -17,8 +17,8 @@ class Trip(models.Model):
     
     name = models.TextField(blank=False)
     location = models.TextField(blank=False)
-    start_date = models.DateTimeField()
-    end_date = models.DateTimeField()
+    start_date = models.DateField()
+    end_date = models.DateField()
     
     def __str__(self):
         '''Return a string representation of this Article object.'''
