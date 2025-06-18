@@ -120,7 +120,7 @@ nav .nav-links a.active {
     margin-bottom: 5px;
 }
 
-.trip-card-header .location {
+.trip-card-header .description {
     font-size: 14px;
     opacity: 0.9;
 }

@@ -22,8 +22,11 @@ class CreateTripView(CreateView):
     def get_success_url(self):
         '''Redirect to the show_all page after successful creation.'''
         return reverse('show_all')
+
+
+#class ShowTripDetailView(DetailView):
     
-    
+
 
 
 # {% extends 'project/base.html' %}
