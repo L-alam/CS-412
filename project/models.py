@@ -37,6 +37,20 @@ class Profile(models.Model):
     def __str__(self):
         '''Return a string representation of this Profile.'''
         return  f'{self.first_name} {self.last_name}'
+    
+    
+class Friend(models.Model):
+    '''Represents a friendship between two profiles.'''
+    
+    profile1 = models.ForeignKey("Profile", on_delete=models.CASCADE, related_name="profile1")
+    profile2 = models.ForeignKey("Profile", on_delete=models.CASCADE, related_name="profile2")
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        '''Return a string representation of this Friend relationship.'''
+        return f'{self.profile1.first_name} {self.profile1.last_name} & {self.profile2.first_name} {self.profile2.last_name}'
+    
+
 
 
 class Plan(models.Model):

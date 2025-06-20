@@ -8,3 +8,4 @@ urlpatterns = [
     path('trip/<int:pk>/', ShowTripDetailView.as_view(), name='show_trip'),
     path('trip/<int:trip_pk>/create_plan/', CreatePlanView.as_view(), name='create_plan'),
 ]
+
