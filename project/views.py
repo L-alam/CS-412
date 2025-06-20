@@ -101,6 +101,22 @@ class AddFriendView(View):
         # Redirect back to friend suggestions
         return redirect('friend_suggestions', pk=pk)
 
+
+class RemoveFriendView(View):
+    '''A view to remove a friend relationship between two profiles.'''
+    
+    def get(self, request, *args, **kwargs):
+        '''Handle the remove friend request.'''
+        pk = self.kwargs.get('pk')
+        other_pk = self.kwargs.get('other_pk')
+        
+        profile = get_object_or_404(Profile, pk=pk)
+        other_profile = get_object_or_404(Profile, pk=other_pk)
+        
+        profile.remove_friend(other_profile)
+        
+        return redirect('show_profile', pk=pk)
+
     
 
 

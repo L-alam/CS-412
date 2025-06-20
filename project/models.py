@@ -79,6 +79,15 @@ class Profile(models.Model):
         
         return suggestions
     
+    def remove_friend(self, other):
+        '''Remove a friend relationship between self and other Profile.'''
+        Friend.objects.filter(
+            models.Q(profile1=self, profile2=other) | 
+            models.Q(profile1=other, profile2=self)
+        ).delete()
+    
+    
+
     
 class Friend(models.Model):
     '''Represents a friendship between two profiles.'''

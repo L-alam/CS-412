@@ -23,6 +23,7 @@
                     <h4>{{ friend.first_name }} {{ friend.last_name }}</h4>
                     <p class="friend-email">{{ friend.email }}</p>
                 </div>
+                <a href="{% url 'remove_friend' profile.pk friend.pk %}" class="remove-friend-btn" onclick="return confirm('Remove {{ friend.first_name }} as a friend?')">×</a>
             </div>
             {% endfor %}
         </div>
@@ -30,6 +31,35 @@
         <div class="empty-friends">
             <h3>No friends yet</h3>
             <p>Start connecting with people to plan trips together!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Existing Wishlist Items -->
+    <div class="wishlist-section">
+        <div class="section-header">
+            <h2>My Travel Wishlist</h2>
+            <a href="{% url 'add_wishlist_item' profile.pk %}" class="btn btn-primary">+ Add Destination</a>
+        </div>
+        
+        {% if profile.wishlist.all %}
+        <div class="wishlist-grid">
+            {% for item in profile.wishlist.all %}
+            <div class="wishlist-item">
+                <h3>{{ item.destination_name }}</h3>
+                {% if item.target_year %}
+                    <p class="target-year">Target: {{ item.target_year }}</p>
+                {% else %}
+                    <p class="target-year">No target year set</p>
+                {% endif %}
+                <small>Added {{ item.added_date|date:"M j, Y" }}</small>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-wishlist">
+            <h3>No destinations in your wishlist yet</h3>
+            <p>Start planning your future adventures!</p>
         </div>
         {% endif %}
     </div>
@@ -199,6 +229,34 @@
 
 .btn-primary:hover {
     background: #2d4373;
+}
+
+.friend-item {
+    position: relative;
+    /* ... existing styles ... */
+}
+
+.remove-friend-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    background: #d9534f;
+    color: white;
+    border-radius: 50%;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}
+
+.remove-friend-btn:hover {
+    opacity: 1;
 }
 
 @media (max-width: 768px) {
