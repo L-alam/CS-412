@@ -1,0 +1,142 @@
+<!-- project/templates/project/friend_suggestions.html -->
+{% extends 'project/base.html' %}
+
+{% block content %}
+<div class="suggestions-container">
+    <div class="page-header">
+        <h1>Friend Suggestions</h1>
+        <p>People you might want to connect with</p>
+        <a href="{% url 'show_profile' profile.pk %}" class="back-link">← Back to Profile</a>
+    </div>
+    
+    <div class="suggestions-grid">
+        {% for suggestion in profile.get_friend_suggestions %}
+        <div class="suggestion-card">
+            <div class="suggestion-info">
+                <h3>{{ suggestion.first_name }} {{ suggestion.last_name }}</h3>
+                <p class="email">{{ suggestion.email }}</p>
+            </div>
+            <div class="suggestion-actions">
+                <a href="{% url 'add_friend' profile.pk suggestion.pk %}" class="add-friend-btn">
+                    Add Friend
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="no-suggestions">
+            <h3>No friend suggestions available</h3>
+            <p>You may already be friends with everyone!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.suggestions-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.page-header h1 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 32px;
+}
+
+.page-header p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.back-link {
+    color: #3b5998;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+.suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.suggestion-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 25px;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.suggestion-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.suggestion-info h3 {
+    margin-bottom: 10px;
+    color: #333;
+    font-size: 20px;
+}
+
+.suggestion-info .email {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.suggestion-actions {
+    margin-top: 20px;
+}
+
+.add-friend-btn {
+    background: #3b5998;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    display: inline-block;
+    transition: background-color 0.3s;
+}
+
+.add-friend-btn:hover {
+    background: #2d4373;
+}
+
+.no-suggestions {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.no-suggestions h3 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.no-suggestions p {
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .suggestions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

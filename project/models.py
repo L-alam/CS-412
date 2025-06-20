@@ -38,6 +38,47 @@ class Profile(models.Model):
         '''Return a string representation of this Profile.'''
         return  f'{self.first_name} {self.last_name}'
     
+    def get_friends(self):
+        '''Return a list of all friends (Profile objects) for this Profile.'''
+        friends_as_profile1 = Friend.objects.filter(profile1=self)
+        friends_as_profile2 = Friend.objects.filter(profile2=self)
+        
+        friend_profiles = []
+        
+        for friend in friends_as_profile1:
+            friend_profiles.append(friend.profile2)
+        
+        for friend in friends_as_profile2:
+            friend_profiles.append(friend.profile1)
+        
+        return friend_profiles
+    
+    def add_friend(self, other):
+        '''Add a friend relationship between self and other Profile.'''
+        if self == other:
+            return
+        
+        existing_friend = Friend.objects.filter(
+            models.Q(profile1=self, profile2=other) | 
+            models.Q(profile1=other, profile2=self)
+        ).first()
+        
+        if not existing_friend:
+            Friend.objects.create(profile1=self, profile2=other)
+    
+    def get_friend_suggestions(self):
+        '''Return a list of Profiles that could be friends.'''
+        all_profiles = Profile.objects.all()
+        
+        current_friends = self.get_friends()
+        
+        suggestions = []
+        for profile in all_profiles:
+            if profile != self and profile not in current_friends:
+                suggestions.append(profile)
+        
+        return suggestions
+    
     
 class Friend(models.Model):
     '''Represents a friendship between two profiles.'''
