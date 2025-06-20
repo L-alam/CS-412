@@ -173,3 +173,71 @@ class WishlistItem(models.Model):
     
     class Meta:
         ordering = ['-added_date']
+
+
+
+class DestinationVote(models.Model):
+    trip = models.ForeignKey("Trip", on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    destination_name = models.TextField()
+    country = models.TextField()
+    vote_count = models.IntegerField(default=0)
+    suggested_date = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f'{self.destination_name}, {self.country} - {self.trip.name}'
+
+class Accommodation(models.Model):
+    plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="destinations")
+    added_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.TextField()
+    location = models.TextField()
+    price_total = models.DecimalField(max_digits=8, decimal_places=2)
+    price_per_night = models.DecimalField(max_digits=8, decimal_places=2)
+    capacity = models.IntegerField()
+    booking_url = models.URLField(blank=True)
+    image = models.ImageField(upload_to='accommodations/', blank=True)
+    votes = models.IntegerField(default=0)
+    
+    def __str__(self):
+        return f'{self.name} - {self.trip.name}'
+
+class Expense(models.Model):
+    plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="destinations")
+    added_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    date_added = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f'{self.description} - ${self.amount}'
+
+
+class Flight(models.Model):
+    FLIGHT_TYPE_CHOICES = [
+        ('outbound', 'Outbound'),
+        ('return', 'Return'),
+        ('connecting', 'Connecting'),
+    ]
+    
+    CLASS_CHOICES = [
+        ('economy', 'Economy'),
+        ('premium_economy', 'Premium Economy'),
+        ('business', 'Business'),
+        ('first', 'First Class'),
+    ]
+    
+    plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="destinations")
+    suggested_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    
+    airline = models.TextField()
+    flight_number = models.CharField(max_length=20)
+    departure_airport = models.CharField(max_length=10) 
+    arrival_airport = models.CharField(max_length=10)
+    departure_city = models.TextField()
+    arrival_city = models.TextField()
+    
+    def __str__(self):
+        return f'{self.airline} {self.flight_number}: {self.departure_city} → {self.arrival_city}'
+    
+    class Meta:
+        ordering = ['departure_date']
