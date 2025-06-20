@@ -50,6 +50,33 @@ class Friend(models.Model):
         '''Return a string representation of this Friend relationship.'''
         return f'{self.profile1.first_name} {self.profile1.last_name} & {self.profile2.first_name} {self.profile2.last_name}'
     
+    
+class WishlistItem(models.Model):
+    '''A place that a user wants to visit in their wishlist.'''
+    
+    profile = models.ForeignKey("Profile", on_delete=models.CASCADE, related_name="wishlist")
+    destination_name = models.TextField(blank=False, help_text="e.g., 'Paris', 'Bali', 'Tokyo'")
+    country = models.TextField(blank=False)
+    notes = models.TextField(blank=True, help_text="Why you want to go, what you want to do there, etc.")
+    priority = models.CharField(
+        max_length=10, 
+        choices=[
+            ('high', 'High'),
+            ('medium', 'Medium'), 
+            ('low', 'Low')
+        ],
+        default='medium'
+    )
+    added_date = models.DateTimeField(auto_now_add=True)
+    target_year = models.IntegerField(null=True, blank=True, help_text="Year you hope to visit")
+    estimated_budget = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    
+    def __str__(self):
+        return f'{self.destination_name}, {self.country} - {self.profile.first_name}'
+    
+    class Meta:
+        ordering = ['-added_date']
+    
 
 
 
@@ -91,3 +118,20 @@ class Destination(models.Model):
     
     def __str__(self):
         return f'{self.city}, {self.country}'
+
+
+
+class WishlistItem(models.Model):
+    '''A place that a user wants to visit in their wishlist.'''
+    
+    profile = models.ForeignKey("Profile", on_delete=models.CASCADE, related_name="wishlist")
+    destination_name = models.TextField(blank=False, help_text="e.g., 'Paris', 'Bali', 'Tokyo'")
+    
+    added_date = models.DateTimeField(auto_now_add=True)
+    target_year = models.IntegerField(null=True, blank=True, help_text="Year you hope to visit")
+    
+    def __str__(self):
+        return f'{self.destination_name}, - {self.profile.first_name}'
+    
+    class Meta:
+        ordering = ['-added_date']
