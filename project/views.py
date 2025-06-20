@@ -117,6 +117,19 @@ class RemoveFriendView(View):
         
         return redirect('show_profile', pk=pk)
 
+class RemoveWishlistItemView(View):
+    '''A view to remove a wishlist item.'''
+    
+    def get(self, request, *args, **kwargs):
+        '''Handle the remove wishlist item request.'''
+        pk = self.kwargs.get('pk')  # profile pk
+        item_pk = self.kwargs.get('item_pk')  # wishlist item pk
+        
+        wishlist_item = get_object_or_404(WishlistItem, pk=item_pk)
+        wishlist_item.delete()
+        
+        return redirect('show_profile', pk=pk)
+
     
 
 

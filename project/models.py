@@ -106,20 +106,8 @@ class WishlistItem(models.Model):
     
     profile = models.ForeignKey("Profile", on_delete=models.CASCADE, related_name="wishlist")
     destination_name = models.TextField(blank=False, help_text="e.g., 'Paris', 'Bali', 'Tokyo'")
-    country = models.TextField(blank=False)
-    notes = models.TextField(blank=True, help_text="Why you want to go, what you want to do there, etc.")
-    priority = models.CharField(
-        max_length=10, 
-        choices=[
-            ('high', 'High'),
-            ('medium', 'Medium'), 
-            ('low', 'Low')
-        ],
-        default='medium'
-    )
     added_date = models.DateTimeField(auto_now_add=True)
     target_year = models.IntegerField(null=True, blank=True, help_text="Year you hope to visit")
-    estimated_budget = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     
     def __str__(self):
         return f'{self.destination_name}, {self.country} - {self.profile.first_name}'
