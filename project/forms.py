@@ -1,5 +1,5 @@
 from django import forms
-from .models import Trip, Plan
+from .models import Trip, Plan, WishlistItem
 
 class CreateTripForm(forms.ModelForm):
     '''Adding a Trip to the database.'''
@@ -19,4 +19,10 @@ class CreatePlanForm(forms.ModelForm):
     class Meta:
         model = Plan
         fields = ['name']
+
+
+class AddWishlistItemForm(forms.ModelForm):
+    class Meta:
+        model = WishlistItem
+        fields = ['destination_name', 'target_year']
         

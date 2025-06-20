@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.views.generic import ListView, DetailView, CreateView 
 from .models import *
-from .forms import CreateTripForm, CreatePlanForm
+from .forms import CreateTripForm, CreatePlanForm, AddWishlistItemForm
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
 
@@ -49,6 +49,32 @@ class CreatePlanView(CreateView):
     
     def get_success_url(self):
         return reverse('show_trip', kwargs={'pk': self.kwargs['trip_pk']})
+    
+
+class ShowProfilePageView(DetailView):
+    """Show the current user's profile"""
+    model = Profile
+    template_name = 'project/show_profile.html'
+    context_object_name = 'profile'
+    
+
+
+class AddWishlistItemView(CreateView):
+    model = WishlistItem
+    form_class = AddWishlistItemForm
+    template_name = 'project/add_wishlist_item.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['profile'] = get_object_or_404(Profile, pk=self.kwargs['pk'])
+        return context
+    
+    def form_valid(self, form):
+        form.instance.profile = get_object_or_404(Profile, pk=self.kwargs['pk'])
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse('show_profile', kwargs={'pk': self.kwargs['pk']})
     
 
 
