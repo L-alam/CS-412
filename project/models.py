@@ -29,6 +29,7 @@ class Trip(models.Model):
         return self.plans.all()
 
 
+
 class Profile(models.Model):
     first_name = models.TextField(blank=False)
     last_name = models.TextField(blank=False)
@@ -86,7 +87,6 @@ class Profile(models.Model):
             models.Q(profile1=other, profile2=self)
         ).delete()
     
-    
 
     
 class Friend(models.Model):
@@ -99,23 +99,7 @@ class Friend(models.Model):
     def __str__(self):
         '''Return a string representation of this Friend relationship.'''
         return f'{self.profile1.first_name} {self.profile1.last_name} & {self.profile2.first_name} {self.profile2.last_name}'
-    
-    
-class WishlistItem(models.Model):
-    '''A place that a user wants to visit in their wishlist.'''
-    
-    profile = models.ForeignKey("Profile", on_delete=models.CASCADE, related_name="wishlist")
-    destination_name = models.TextField(blank=False, help_text="e.g., 'Paris', 'Bali', 'Tokyo'")
-    added_date = models.DateTimeField(auto_now_add=True)
-    target_year = models.IntegerField(null=True, blank=True, help_text="Year you hope to visit")
-    
-    def __str__(self):
-        return f'{self.destination_name}, {self.country} - {self.profile.first_name}'
-    
-    class Meta:
-        ordering = ['-added_date']
-    
-
+        
 
 
 class Plan(models.Model):
@@ -175,20 +159,8 @@ class WishlistItem(models.Model):
         ordering = ['-added_date']
 
 
-
-class DestinationVote(models.Model):
-    trip = models.ForeignKey("Trip", on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    destination_name = models.TextField()
-    country = models.TextField()
-    vote_count = models.IntegerField(default=0)
-    suggested_date = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return f'{self.destination_name}, {self.country} - {self.trip.name}'
-
 class Accommodation(models.Model):
-    plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="destinations")
+    plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="accommodations")  # Fixed: changed from "destinations"
     added_by = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.TextField()
     location = models.TextField()
@@ -196,15 +168,16 @@ class Accommodation(models.Model):
     price_per_night = models.DecimalField(max_digits=8, decimal_places=2)
     capacity = models.IntegerField()
     booking_url = models.URLField(blank=True)
-    image = models.ImageField(upload_to='accommodations/', blank=True)
-    votes = models.IntegerField(default=0)
     
     def __str__(self):
-        return f'{self.name} - {self.trip.name}'
+        return f'{self.name} - {self.plan.trip.name}' 
+
+
 
 class Expense(models.Model):
-    plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="destinations")
+    plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="expenses")
     added_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    description = models.TextField() 
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     date_added = models.DateTimeField(auto_now_add=True)
     
@@ -226,7 +199,7 @@ class Flight(models.Model):
         ('first', 'First Class'),
     ]
     
-    plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="destinations")
+    plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="flights")
     suggested_by = models.ForeignKey(User, on_delete=models.CASCADE)
     
     airline = models.TextField()
@@ -239,5 +212,5 @@ class Flight(models.Model):
     def __str__(self):
         return f'{self.airline} {self.flight_number}: {self.departure_city} → {self.arrival_city}'
     
-    class Meta:
-        ordering = ['departure_date']
+    # class Meta:
+    #     ordering = ['departure_date']

@@ -242,3 +242,20 @@ class ShowNewsFeedView(LoginRequiredMixin, DetailView):
         return super().dispatch(request, *args, **kwargs)
 
 
+    # # Date and time
+    # departure_date = models.DateTimeField()
+    # arrival_date = models.DateTimeField()
+    # duration = models.DurationField(null=True, blank=True)  # Flight duration
+    
+    # # Pricing and booking
+    # price = models.DecimalField(max_digits=10, decimal_places=2)
+    # flight_class = models.CharField(max_length=20, choices=CLASS_CHOICES, default='economy')
+    # booking_url = models.URLField(blank=True)
+    
+    # # Trip context
+    # flight_type = models.CharField(max_length=15, choices=FLIGHT_TYPE_CHOICES, default='outbound')
+    # votes = models.IntegerField(default=0)
+    # notes = models.TextField(blank=True)
+    
+    # # Metadata
+    # suggested_date = models.DateTimeField(auto_now_add=True)
