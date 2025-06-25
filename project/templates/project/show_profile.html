@@ -23,14 +23,48 @@
         </div>
         
         {% if profile.get_friends %}
-        <div class="friends-grid">
+        <div class="friends-list">
             {% for friend in profile.get_friends %}
-            <div class="friend-item">
-                <div class="friend-info">
-                    <h4>{{ friend.first_name }} {{ friend.last_name }}</h4>
-                    <p class="friend-email">{{ friend.email }}</p>
+            <div class="friend-card">
+                <div class="friend-header" onclick="toggleWishlist('friend-{{ friend.pk }}')">
+                    <div class="friend-info">
+                        <h4>{{ friend.first_name }} {{ friend.last_name }}</h4>
+                        <p class="friend-email">{{ friend.email }}</p>
+                    </div>
+                    <div class="friend-actions">
+                        <button class="wishlist-toggle-btn" id="toggle-btn-{{ friend.pk }}">
+                            <span class="arrow">▼</span> View Wishlist
+                        </button>
+                        <a href="{% url 'remove_friend' profile.pk friend.pk %}" class="remove-friend-btn" onclick="return confirm('Remove {{ friend.first_name }} as a friend?')">×</a>
+                    </div>
                 </div>
-                <a href="{% url 'remove_friend' profile.pk friend.pk %}" class="remove-friend-btn" onclick="return confirm('Remove {{ friend.first_name }} as a friend?')">×</a>
+                
+                <!-- Friend's Wishlist (hidden by default) -->
+                <div class="friend-wishlist" id="friend-{{ friend.pk }}" style="display: none;">
+                    <div class="wishlist-header">
+                        <h5>{{ friend.first_name }}'s Travel Wishlist</h5>
+                    </div>
+                    
+                    {% if friend.wishlist.all %}
+                    <div class="wishlist-items">
+                        {% for item in friend.wishlist.all %}
+                        <div class="wishlist-item-small">
+                            <div class="destination-info">
+                                <span class="destination-name">{{ item.destination_name }}</span>
+                                {% if item.target_year %}
+                                    <span class="target-year">{{ item.target_year }}</span>
+                                {% endif %}
+                            </div>
+                            <small class="added-date">Added {{ item.added_date|date:"M j, Y" }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-wishlist-small">
+                        <p>{{ friend.first_name }} hasn't added any destinations to their wishlist yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
             {% endfor %}
         </div>
@@ -74,6 +108,26 @@
     
 </div>
 {% endif %}
+
+<script>
+    function toggleWishlist(friendId) {
+        const wishlistDiv = document.getElementById(friendId);
+        const toggleBtn = document.getElementById('toggle-btn-' + friendId.split('-')[1]);
+        const arrow = toggleBtn.querySelector('.arrow');
+        
+        if (wishlistDiv.style.display === 'none' || wishlistDiv.style.display === '') {
+            wishlistDiv.style.display = 'block';
+            arrow.textContent = '▲';
+            toggleBtn.innerHTML = '<span class="arrow">▲</span> Hide Wishlist';
+        } else {
+            wishlistDiv.style.display = 'none';
+            arrow.textContent = '▼';
+            toggleBtn.innerHTML = '<span class="arrow">▼</span> View Wishlist';
+        }
+    }
+    </script>
+
+
 <style>
 .profile-container {
     max-width: 800px;
@@ -194,7 +248,7 @@
 
 .target-year {
     color: #667eea;
-    margin-bottom: 10px;
+    margin-bottom: 0px;
     font-weight: 600;
 }
 
@@ -306,5 +360,189 @@
         grid-template-columns: 1fr;
     }
 }
+
+.friends-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.friend-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #3b5998;
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+}
+
+.friend-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.friend-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    cursor: pointer;
+    background: white;
+}
+
+.friend-info h4 {
+    margin-bottom: 5px;
+    color: #333;
+    font-size: 16px;
+}
+
+.friend-email {
+    color: #666;
+    font-size: 14px;
+    margin: 0;
+}
+
+.friend-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wishlist-toggle-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.3s;
+}
+
+.wishlist-toggle-btn:hover {
+    background: #5a6fd8;
+}
+
+.wishlist-toggle-btn .arrow {
+    font-size: 10px;
+    margin-right: 20px;
+}
+
+.remove-friend-btn {
+    width: 24px;
+    height: 24px;
+    background: #d9534f;
+    color: white;
+    border-radius: 50%;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}
+
+.remove-friend-btn:hover {
+    opacity: 1;
+}
+
+.friend-wishlist {
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 15px;
+}
+
+.wishlist-header {
+    margin-bottom: 12px;
+}
+
+.wishlist-header h5 {
+    color: #667eea;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.wishlist-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wishlist-item-small {
+    background: white;
+    padding: 10px;
+    border-radius: 4px;
+    border-left: 3px solid #667eea;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.destination-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.destination-name {
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.target-year {
+    background: #667eea;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.added-date {
+    color: #999;
+    font-size: 11px;
+}
+
+.empty-wishlist-small {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-style: italic;
+}
+
+.empty-wishlist-small p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .friend-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .friend-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .wishlist-item-small {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .destination-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+}
+
 </style>
 {% endblock %}
