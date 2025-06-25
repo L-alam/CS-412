@@ -117,6 +117,10 @@ class Plan(models.Model):
     def __str__(self):
         return f'{self.name} for {self.trip.name}'
     
+    def get_destinations(self):
+        '''Return all destinations for this plan'''
+        return self.destinations.all()
+    
     class Meta:
         ordering = ['-created_date']
 
@@ -139,7 +143,7 @@ class Destination(models.Model):
     estimated_cost = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     
     def __str__(self):
-        return f'{self.city}, {self.country}'
+        return f'{self.city} - {self.plan}'
 
 
 

@@ -24,9 +24,175 @@
     </div>
 </div>
 
-<!-- Plan Display Section-->
-<div>
+<!-- Destination Section -->
+<div class="destinations-section">
+    <h2>Destinations</h2>
+    <div class="plans-buttons">
+        {% for plan in trip.get_plans %}
+            {% for destination in plan.get_destinations %}
+                <p>{{ destination.city }}, {{ destination.country }}</p>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
 
+
+<!-- New Tabbed Section -->
+<div class="tabbed-section">
+    <div class="tab-navigation">
+        <button class="tab-btn active" data-tab="flights">Flights</button>
+        <button class="tab-btn" data-tab="housing">Housing</button>
+        <button class="tab-btn" data-tab="list">List</button>
+    </div>
+    
+    <!-- Flights Tab Content -->
+    <div class="tab-content active" id="flights-tab">
+        <div class="tab-header">
+            <h3>Flight Options</h3>
+            <button class="add-btn">+ Add Flight</button>
+        </div>
+        <div class="content-list">
+            <div class="list-item flight-item">
+                <div class="item-main">
+                    <div class="flight-route">
+                        <span class="airport">JFK</span>
+                        <span class="arrow">→</span>
+                        <span class="airport">CDG</span>
+                    </div>
+                    <div class="flight-details">
+                        <span class="airline">Air France 123</span>
+                        <span class="duration">7h 30m</span>
+                    </div>
+                </div>
+                <div class="item-price">$650</div>
+                <div class="item-actions">
+                    <button class="btn-select">Select</button>
+                </div>
+            </div>
+            
+            <div class="list-item flight-item">
+                <div class="item-main">
+                    <div class="flight-route">
+                        <span class="airport">JFK</span>
+                        <span class="arrow">→</span>
+                        <span class="airport">LHR</span>
+                    </div>
+                    <div class="flight-details">
+                        <span class="airline">British Airways 215</span>
+                        <span class="duration">6h 45m</span>
+                    </div>
+                </div>
+                <div class="item-price">$720</div>
+                <div class="item-actions">
+                    <button class="btn-select">Select</button>
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="pagination">
+                <button class="page-btn" disabled>← Previous</button>
+                <span class="page-info">Page 1 of 3</span>
+                <button class="page-btn">Next →</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Housing Tab Content -->
+    <div class="tab-content" id="housing-tab">
+        <div class="tab-header">
+            <h3>Accommodation Options</h3>
+            <button class="add-btn">+ Add Accommodation</button>
+        </div>
+        <div class="content-list">
+            <div class="list-item housing-item">
+                <div class="item-main">
+                    <div class="housing-name">Hotel Plaza Paris</div>
+                    <div class="housing-details">
+                        <span class="location">Champs-Élysées, Paris</span>
+                        <span class="rating">★★★★☆ (4.2)</span>
+                    </div>
+                </div>
+                <div class="item-price">$150/night</div>
+                <div class="item-actions">
+                    <button class="btn-select">Select</button>
+                </div>
+            </div>
+            
+            <div class="list-item housing-item">
+                <div class="item-main">
+                    <div class="housing-name">Le Marais Apartment</div>
+                    <div class="housing-details">
+                        <span class="location">Le Marais, Paris</span>
+                        <span class="rating">★★★★★ (4.8)</span>
+                    </div>
+                </div>
+                <div class="item-price">$120/night</div>
+                <div class="item-actions">
+                    <button class="btn-select">Select</button>
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="pagination">
+                <button class="page-btn" disabled>← Previous</button>
+                <span class="page-info">Page 1 of 2</span>
+                <button class="page-btn">Next →</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- List Tab Content -->
+    <div class="tab-content" id="list-tab">
+        <div class="tab-header">
+            <h3>Custom List</h3>
+            <button class="add-btn" onclick="showAddItemForm()">+ Add Item</button>
+        </div>
+        
+        <!-- Add Item Form (hidden by default) -->
+        <div class="add-item-form" id="add-item-form" style="display: none;">
+            <div class="form-group">
+                <input type="text" id="item-title" placeholder="Item title" class="form-input">
+            </div>
+            <div class="form-group">
+                <textarea id="item-description" placeholder="Description (optional)" class="form-input"></textarea>
+            </div>
+            <div class="form-actions">
+                <button class="btn-save" onclick="addCustomItem()">Save Item</button>
+                <button class="btn-cancel" onclick="hideAddItemForm()">Cancel</button>
+            </div>
+        </div>
+        
+        <div class="content-list">
+            <div class="list-item custom-item">
+                <div class="item-main">
+                    <div class="item-title">Visit Eiffel Tower</div>
+                    <div class="item-description">Must-see landmark, go during sunset</div>
+                </div>
+                <div class="item-actions">
+                    <button class="btn-edit">Edit</button>
+                    <button class="btn-delete">Delete</button>
+                </div>
+            </div>
+            
+            <div class="list-item custom-item">
+                <div class="item-main">
+                    <div class="item-title">Book restaurant reservation</div>
+                    <div class="item-description">Le Comptoir du Relais - need to call ahead</div>
+                </div>
+                <div class="item-actions">
+                    <button class="btn-edit">Edit</button>
+                    <button class="btn-delete">Delete</button>
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="pagination">
+                <button class="page-btn" disabled>← Previous</button>
+                <span class="page-info">Page 1 of 1</span>
+                <button class="page-btn" disabled>Next →</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Trip Details -->
@@ -42,7 +208,85 @@
     </div>
 </div>
 
+<script>
+// Tab functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetTab = this.dataset.tab;
+            
+            // Remove active class from all tabs and contents
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding content
+            this.classList.add('active');
+            document.getElementById(targetTab + '-tab').classList.add('active');
+        });
+    });
+});
+
+// Custom list functionality
+function showAddItemForm() {
+    document.getElementById('add-item-form').style.display = 'block';
+}
+
+function hideAddItemForm() {
+    document.getElementById('add-item-form').style.display = 'none';
+    document.getElementById('item-title').value = '';
+    document.getElementById('item-description').value = '';
+}
+
+function addCustomItem() {
+    const title = document.getElementById('item-title').value;
+    const description = document.getElementById('item-description').value;
+    
+    if (!title.trim()) {
+        alert('Please enter a title for the item');
+        return;
+    }
+    
+    // Create new list item
+    const contentList = document.querySelector('#list-tab .content-list');
+    const pagination = contentList.querySelector('.pagination');
+    
+    const newItem = document.createElement('div');
+    newItem.className = 'list-item custom-item';
+    newItem.innerHTML = `
+        <div class="item-main">
+            <div class="item-title">${title}</div>
+            <div class="item-description">${description}</div>
+        </div>
+        <div class="item-actions">
+            <button class="btn-edit">Edit</button>
+            <button class="btn-delete" onclick="this.parentElement.parentElement.remove()">Delete</button>
+        </div>
+    `;
+    
+    contentList.insertBefore(newItem, pagination);
+    hideAddItemForm();
+}
+</script>
+
 <style>
+
+.destinations-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.destinations-section h2 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+
 .plans-section {
     margin-bottom: 30px;
     padding: 20px;
@@ -93,6 +337,300 @@
     border-color: #449d44;
 }
 
+/* Tabbed Section Styles */
+.tabbed-section {
+    margin-bottom: 30px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.tab-navigation {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 15px 20px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.3s;
+}
+
+.tab-btn:hover {
+    background: rgba(59, 89, 152, 0.1);
+    color: #3b5998;
+}
+
+.tab-btn.active {
+    background: white;
+    color: #3b5998;
+    border-bottom: 3px solid #3b5998;
+}
+
+.tab-content {
+    display: none;
+    padding: 25px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tab-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.tab-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 20px;
+}
+
+.add-btn {
+    background: #5cb85c;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.add-btn:hover {
+    background: #449d44;
+}
+
+/* List Item Styles */
+.content-list {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    background: #f8f9fa;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.list-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.item-main {
+    flex: 1;
+}
+
+/* Flight-specific styles */
+.flight-route {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.airport {
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+}
+
+.arrow {
+    color: #666;
+    font-size: 14px;
+}
+
+.flight-details {
+    display: flex;
+    gap: 15px;
+    font-size: 14px;
+    color: #666;
+}
+
+/* Housing-specific styles */
+.housing-name {
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.housing-details {
+    display: flex;
+    gap: 15px;
+    font-size: 14px;
+    color: #666;
+}
+
+.rating {
+    color: #ff9500;
+}
+
+/* Custom list styles */
+.item-title {
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.item-description {
+    font-size: 14px;
+    color: #666;
+}
+
+.item-price {
+    font-weight: bold;
+    font-size: 18px;
+    color: #3b5998;
+    margin: 0 20px;
+}
+
+.item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-select, .btn-edit, .btn-delete, .btn-save, .btn-cancel {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.btn-select {
+    background: #3b5998;
+    color: white;
+}
+
+.btn-select:hover {
+    background: #2d4373;
+}
+
+.btn-edit {
+    background: #ffc107;
+    color: #333;
+}
+
+.btn-edit:hover {
+    background: #e0a800;
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+}
+
+.btn-save {
+    background: #28a745;
+    color: white;
+}
+
+.btn-save:hover {
+    background: #218838;
+}
+
+.btn-cancel {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-cancel:hover {
+    background: #5a6268;
+}
+
+/* Add Item Form */
+.add-item-form {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #3b5998;
+    box-shadow: 0 0 0 2px rgba(59, 89, 152, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
+}
+
+.page-btn {
+    padding: 8px 16px;
+    border: 1px solid #dee2e6;
+    background: white;
+    color: #3b5998;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #f8f9fa;
+}
+
+.page-btn:disabled {
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.page-info {
+    font-size: 14px;
+    color: #666;
+}
+
 .trip-details {
     background: white;
     padding: 20px;
@@ -107,6 +645,39 @@
 
 .trip-info p {
     margin-bottom: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .tab-navigation {
+        flex-direction: column;
+    }
+    
+    .tab-btn {
+        flex: none;
+    }
+    
+    .tab-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .list-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .item-actions {
+        align-self: stretch;
+        justify-content: flex-end;
+    }
+    
+    .item-price {
+        margin: 0;
+        align-self: flex-end;
+    }
 }
 </style>
 {% endblock %}

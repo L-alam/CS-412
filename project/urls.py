@@ -12,5 +12,8 @@ urlpatterns = [
     path('profile/<int:pk>/add_friend/<int:other_pk>/', AddFriendView.as_view(), name='add_friend'),
     path('profile/<int:pk>/remove_friend/<int:other_pk>/', RemoveFriendView.as_view(), name='remove_friend'),
     path('profile/<int:pk>/remove_wishlist/<int:item_pk>/', RemoveWishlistItemView.as_view(), name='remove_wishlist_item'),
+    
+    path('login/', auth_views.LoginView.as_view(template_name='project/login.html'), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(template_name='project/logged_out.html'), name='logout'),
 ]
 
