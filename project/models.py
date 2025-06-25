@@ -32,15 +32,21 @@ class Trip(models.Model):
         '''Return all members of this trip'''
         return self.members.all()
     
+    def get_organizers(self):
+        '''Return all organizers of this trip'''
+        return self.members.filter(role='organizer')
+    
+    def is_organizer(self, user):
+        '''Check if a user is an organizer of this trip'''
+        if not user.is_authenticated:
+            return False
+        return self.members.filter(user=user, role='organizer').exists()
+    
     def is_member(self, user):
         '''Check if a user is a member of this trip'''
         if not user.is_authenticated:
             return False
         return self.members.filter(user=user).exists()
-    
-    # def get_organizers(self):
-    #     '''Return all organizers of this trip'''
-    #     return self.members.filter(role='organizer')
     
     def can_edit(self, user):
         '''Check if a user can edit this trip (is a member)'''
@@ -50,20 +56,20 @@ class Trip(models.Model):
         '''Add a user as a member of this trip'''
         if not self.is_member(user):
             TripMember.objects.create(trip=self, user=user, role=role)
-
+            
 
 
 class TripMember(models.Model):
     '''Represents membership in a trip - who can view and edit the trip'''
     
-    # ROLE_CHOICES = [
-    #     ('organizer', 'Organizer'),
-    #     ('member', 'Member'),
-    # ]
+    ROLE_CHOICES = [
+        ('organizer', 'Organizer'),
+        ('member', 'Member'),
+    ]
     
     trip = models.ForeignKey("Trip", on_delete=models.CASCADE, related_name="members")
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    #role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='member')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='member')
     joined_date = models.DateTimeField(auto_now_add=True)
     
     class Meta:

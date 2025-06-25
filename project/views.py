@@ -6,6 +6,9 @@ from django.urls import reverse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
+from django.contrib.auth.models import User
+from django.contrib import messages
+from django.http import JsonResponse
 
 # Create your views here.
 
@@ -38,13 +41,17 @@ class CreateTripView(CreateView):
         return reverse('login')
     
     def form_valid(self, form):
-        '''Set the user before saving if you add a user field to Trip model.'''
-        # form.instance.created_by = self.request.user  # Uncomment if you add this field
-        return super().form_valid(form)
+        '''Set the user as organizer when creating a trip.'''
+        response = super().form_valid(form)
+        
+        # Add the creator as an organizer of the trip
+        self.object.add_member(self.request.user, role='organizer')
+        
+        return response
     
     def get_success_url(self):
-        '''Redirect to the show_all page after successful creation.'''
-        return reverse('show_all')
+        '''Redirect to the trip detail page after successful creation.'''
+        return reverse('show_trip', kwargs={'pk': self.object.pk})
 
 
 
@@ -56,6 +63,25 @@ class ShowTripDetailView(DetailView):
     def get_login_url(self):
         '''Return the URL for the login page.'''
         return reverse('login')
+    
+    def dispatch(self, request, *args, **kwargs):
+        """Check if user has permission to view this trip"""
+        trip = self.get_object()
+        
+        if not request.user.is_authenticated:
+            return redirect('login')
+            
+        # Check if user is a member of the trip
+        if not trip.is_member(request.user):
+            messages.error(request, "You don't have permission to view this trip.")
+            return redirect('show_all')
+            
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['is_organizer'] = self.object.members.filter(user=self.request.user, role='organizer').exists()
+        return context
 
 
 
@@ -285,7 +311,116 @@ class CreateProfileView(CreateView):
     def get_success_url(self):
         return reverse('show_all')
 
+
+class InviteFriendsView(DetailView):
+    '''Show the invite friends page for a trip'''
+    model = Trip
+    template_name = 'project/invite_friends.html'
+    context_object_name = 'trip'
     
+    def get_login_url(self):
+        return reverse('login')
+    
+    def dispatch(self, request, *args, **kwargs):
+        """Ensure user can invite friends (is a member of the trip)"""
+        trip = self.get_object()
+        
+        if not request.user.is_authenticated:
+            return redirect('login')
+            
+        if not trip.can_edit(request.user):
+            messages.error(request, "You don't have permission to invite friends to this trip.")
+            return redirect('show_trip', pk=trip.pk)
+            
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get user's profile to find their friends
+        try:
+            user_profile = self.request.user.trip_profile.first()
+            if user_profile:
+                # Get friends who aren't already members of this trip
+                friends = user_profile.get_friends()
+                current_member_users = [member.user for member in self.object.get_members()]
+                available_friends = [friend for friend in friends if friend.user not in current_member_users]
+                context['available_friends'] = available_friends
+                context['user_profile'] = user_profile  # Add this to context
+            else:
+                context['available_friends'] = []
+                context['user_profile'] = None
+        except:
+            context['available_friends'] = []
+            context['user_profile'] = None
+            
+        return context
+
+
+
+class AddTripMemberView(View):
+    '''Add a friend to a trip as a member'''
+    
+    def get_login_url(self):
+        return reverse('login')
+    
+    def post(self, request, trip_pk, user_pk):
+        trip = get_object_or_404(Trip, pk=trip_pk)
+        user_to_add = get_object_or_404(User, pk=user_pk)
+        
+        # Check permissions
+        if not request.user.is_authenticated:
+            return redirect('login')
+            
+        if not trip.can_edit(request.user):
+            messages.error(request, "You don't have permission to add members to this trip.")
+            return redirect('show_trip', pk=trip.pk)
+        
+        # Add the user as a member
+        if not trip.is_member(user_to_add):
+            trip.add_member(user_to_add, role='member')
+            messages.success(request, f"Successfully added {user_to_add.username} to the trip!")
+        else:
+            messages.info(request, f"{user_to_add.username} is already a member of this trip.")
+        
+        return redirect('invite_friends', pk=trip.pk)
+
+
+
+class RemoveTripMemberView(View):
+    '''Remove a member from a trip'''
+    
+    def get_login_url(self):
+        return reverse('login')
+    
+    def post(self, request, trip_pk, user_pk):
+        trip = get_object_or_404(Trip, pk=trip_pk)
+        user_to_remove = get_object_or_404(User, pk=user_pk)
+        
+        # Check permissions
+        if not request.user.is_authenticated:
+            return redirect('login')
+            
+        if not trip.can_edit(request.user):
+            messages.error(request, "You don't have permission to remove members from this trip.")
+            return redirect('show_trip', pk=trip.pk)
+        
+        # Don't allow removing the last organizer
+        if trip.get_organizers().count() == 1:
+            organizer = trip.get_organizers().first()
+            if organizer.user == user_to_remove:
+                messages.error(request, "Cannot remove the last organizer from the trip.")
+                return redirect('show_trip', pk=trip.pk)
+        
+        # Remove the member
+        trip_member = trip.members.filter(user=user_to_remove).first()
+        if trip_member:
+            trip_member.delete()
+            messages.success(request, f"Removed {user_to_remove.username} from the trip.")
+        else:
+            messages.info(request, f"{user_to_remove.username} is not a member of this trip.")
+        
+        return redirect('show_trip', pk=trip.pk)
 
 
 

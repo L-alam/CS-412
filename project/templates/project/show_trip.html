@@ -14,6 +14,35 @@
     <p>{{ trip.description }}</p>
 </div>
 
+<!-- Trip Members Section -->
+<div class="members-section">
+    <div class="members-header">
+        <div class="members-display">
+            <span class="members-label">Trip Members:</span>
+            <div class="members-list">
+                {% for member in trip.get_members %}
+                <div class="member-tag">
+                    {% if member.user.trip_profile.first %}
+                        {{ member.user.trip_profile.first.first_name }} {{ member.user.trip_profile.first.last_name }}
+                    {% else %}
+                        {{ member.user.username }}
+                    {% endif %}
+                    {% if is_organizer and member.user != request.user %}
+                        <form method="POST" action="{% url 'remove_trip_member' trip.pk member.user.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="remove-member-x" onclick="return confirm('Remove {{ member.user.username }} from this trip?')">×</button>
+                        </form>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="member-tag empty">No members yet</div>
+                {% endfor %}
+            </div>
+        </div>
+        <a href="{% url 'invite_friends' trip.pk %}" class="btn btn-primary">+ Add Friends</a>
+    </div>
+</div>
+
 <!-- Plans Section -->
 <div class="plans-section">
     <h2>Plans</h2>
@@ -687,5 +716,104 @@ function addCustomItem() {
         align-self: flex-end;
     }
 }
+
+.members-section {
+    margin-bottom: 30px;
+    padding: 15px 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.members-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.members-display {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.members-label {
+    font-weight: bold;
+    color: #333;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+.members-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.member-tag {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 14px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    position: relative;
+}
+
+.member-tag.empty {
+    color: #666;
+    font-style: italic;
+}
+
+.organizer-icon {
+    color: #ffc107;
+    font-size: 12px;
+    margin-left: 2px;
+}
+
+.remove-member-x {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 0;
+    margin-left: 5px;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+}
+
+.remove-member-x:hover {
+    background: #dc3545;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .members-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .members-display {
+        width: 100%;
+    }
+    
+    .members-list {
+        margin-top: 5px;
+    }
+}
+
 </style>
 {% endblock %}

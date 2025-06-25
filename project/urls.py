@@ -19,6 +19,11 @@ urlpatterns = [
     path('profile/<int:pk>/remove_friend/<int:other_pk>/', RemoveFriendView.as_view(), name='remove_friend'),
     path('profile/<int:pk>/remove_wishlist/<int:item_pk>/', RemoveWishlistItemView.as_view(), name='remove_wishlist_item'),
     
+    #Trip member management
+    path('trip/<int:pk>/invite_friends/', InviteFriendsView.as_view(), name='invite_friends'),
+    path('trip/<int:trip_pk>/add_member/<int:user_pk>/', AddTripMemberView.as_view(), name='add_trip_member'),
+    path('trip/<int:trip_pk>/remove_member/<int:user_pk>/', RemoveTripMemberView.as_view(), name='remove_trip_member'),
+    
     # Authentication
     path('login/', auth_views.LoginView.as_view(template_name='project/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='logout_confirmation'), name='logout'),
