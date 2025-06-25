@@ -31,6 +31,7 @@ class Trip(models.Model):
 
 
 class Profile(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     first_name = models.TextField(blank=False)
     last_name = models.TextField(blank=False)
     email =  models.TextField(blank=False)

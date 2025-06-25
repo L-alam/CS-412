@@ -141,9 +141,9 @@ class AddWishlistItemView(CreateView):
     def dispatch(self, request, *args, **kwargs):
         """Ensure user can only add wishlist items to their own profile"""
         profile = get_object_or_404(Profile, pk=self.kwargs['pk'])
-        # Add check here if you add user field to Profile model
-        # if profile.user != request.user:
-        #     return redirect('show_profile', pk=profile.pk)
+        
+        if profile.user != request.user:
+            return redirect('show_profile', pk=profile.pk)
         return super().dispatch(request, *args, **kwargs)
     
     def form_valid(self, form):
@@ -168,9 +168,9 @@ class FriendSuggestionsView(DetailView):
     def dispatch(self, request, *args, **kwargs):
         """Ensure user can only view friend suggestions for their own profile"""
         profile = get_object_or_404(Profile, pk=self.kwargs.get('pk'))
-        # Add check here if you add user field to Profile model
-        # if profile.user != request.user:
-        #     return redirect('show_profile', pk=profile.pk)
+
+        if profile.user != request.user:
+            return redirect('show_profile', pk=profile.pk)
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -190,8 +190,12 @@ class AddFriendView(View):
         profile = get_object_or_404(Profile, pk=pk)
         other_profile = get_object_or_404(Profile, pk=other_pk)
         
+        if profile.user != request.user:
+            return redirect('show_profile', pk=pk)
+        
         profile.add_friend(other_profile)
         
+        # Redirect back to friend suggestions
         return redirect('friend_suggestions', pk=pk)
 
 
@@ -210,6 +214,9 @@ class RemoveFriendView(View):
         
         profile = get_object_or_404(Profile, pk=pk)
         other_profile = get_object_or_404(Profile, pk=other_pk)
+        
+        if profile.user != request.user:
+            return redirect('show_profile', pk=pk)
         
         profile.remove_friend(other_profile)
         
@@ -231,8 +238,8 @@ class RemoveWishlistItemView(View):
         wishlist_item = get_object_or_404(WishlistItem, pk=item_pk)
         
         # Add check here if you add user field to Profile model
-        # if profile.user != request.user:
-        #     return redirect('show_profile', pk=pk)
+        if profile.user != request.user:
+            return redirect('show_profile', pk=pk)
         
         # Ensure the wishlist item belongs to this profile
         if wishlist_item.profile != profile:
@@ -263,11 +270,9 @@ class CreateProfileView(CreateView):
         if user_form.is_valid():
             user = user_form.save()
             
-            # Log the user in immediately
             login(self.request, user)
             
-            # Associate the profile with the user if you add a user field to Profile
-            # form.instance.user = user  # Uncomment if you add this field
+            form.instance.user = user  
             
             return super().form_valid(form)
         else:
