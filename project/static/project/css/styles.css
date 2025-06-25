@@ -405,3 +405,62 @@ nav .nav-links a.active {
         gap: 10px;
     }
 }
+
+
+.nav-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: white;
+    font-size: 14px;
+}
+
+.logout-form {
+    display: inline;
+}
+
+.logout-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: underline;
+    padding: 0;
+}
+
+.logout-btn:hover {
+    opacity: 0.8;
+}
+
+.login-link {
+    color: white;
+    text-decoration: none;
+    padding: 8px 16px;
+    border: 1px solid white;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.login-link:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+
+@media (max-width: 768px) {
+    .nav-content {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .user-info {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+}

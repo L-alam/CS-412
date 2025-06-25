@@ -31,14 +31,15 @@ class Trip(models.Model):
 
 
 class Profile(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    # Make it nullable for now to handle existing data
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trip_profile', null=True, blank=True)
     first_name = models.TextField(blank=False)
     last_name = models.TextField(blank=False)
-    email =  models.TextField(blank=False)
+    email = models.TextField(blank=False)
     
     def __str__(self):
         '''Return a string representation of this Profile.'''
-        return  f'{self.first_name} {self.last_name}'
+        return f'{self.first_name} {self.last_name}'
     
     def get_friends(self):
         '''Return a list of all friends (Profile objects) for this Profile.'''

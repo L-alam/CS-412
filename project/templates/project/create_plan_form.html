@@ -2,6 +2,13 @@
 {% extends 'project/base.html' %}
 
 {% block content %}
+{% if not user.is_authenticated %}
+    <div class="auth-required">
+        <h2>Login Required</h2>
+        <p>You must be logged in to view this page.</p>
+        <a href="{% url 'login' %}">Login</a>
+    </div>
+{% else %}
 <div class="form-container">
     <h1>Draft a Plan</h1>
     <p>Create a new plan for your trip</p>
@@ -78,6 +85,7 @@ document.getElementById('add-destination-btn').addEventListener('click', functio
     });
 });
 </script>
+{% endif %}
 
 <style>
 .destinations-section {

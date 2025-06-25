@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.views.generic import ListView, DetailView, CreateView, View
 from .models import *
-from .forms import CreateTripForm, CreatePlanForm, AddWishlistItemForm
+from .forms import *
 from django.urls import reverse
 from django.shortcuts import render, get_object_or_404, redirect
 
