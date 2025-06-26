@@ -270,3 +270,32 @@ class Flight(models.Model):
     
     # class Meta:
     #     ordering = ['departure_date']
+
+
+
+class TripListItem(models.Model):
+    '''Items saved to a trip's list (flights, hotels, custom items)'''
+    
+    ITEM_TYPES = [
+        ('flight', 'Flight'),
+        ('hotel', 'Hotel'),
+        ('custom', 'Custom Item'),
+    ]
+    
+    trip = models.ForeignKey("Trip", on_delete=models.CASCADE, related_name="list_items")
+    added_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    item_type = models.CharField(max_length=20, choices=ITEM_TYPES)
+    title = models.TextField()  # Flight route or hotel name
+    description = models.TextField(blank=True)  # Additional details
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    
+    # JSON field to store item-specific data
+    item_data = models.JSONField(default=dict, blank=True)
+    
+    added_date = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f'{self.title} - {self.trip.name}'
+    
+    class Meta:
+        ordering = ['-added_date']
