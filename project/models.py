@@ -175,6 +175,22 @@ class Plan(models.Model):
         '''Return all destinations for this plan'''
         return self.destinations.all()
     
+    def get_list_items(self):
+        '''Return all list items for this plan'''
+        return self.list_items.all()
+    
+    def get_flight_items(self):
+        '''Return flight items for this plan'''
+        return self.list_items.filter(item_type='flight')
+    
+    def get_hotel_items(self):
+        '''Return hotel items for this plan'''
+        return self.list_items.filter(item_type='hotel')
+    
+    def get_custom_items(self):
+        '''Return custom items for this plan'''
+        return self.list_items.filter(item_type='custom')
+    
     class Meta:
         ordering = ['-created_date']
 
@@ -285,6 +301,7 @@ class TripListItem(models.Model):
     ]
     
     trip = models.ForeignKey("Trip", on_delete=models.CASCADE, related_name="list_items")
+    plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="list_items", null=True, blank=True)  # NEW FIELD
     added_by = models.ForeignKey(User, on_delete=models.CASCADE)
     item_type = models.CharField(max_length=20, choices=ITEM_TYPES)
     title = models.TextField()  # Flight route or hotel name
@@ -297,7 +314,8 @@ class TripListItem(models.Model):
     added_date = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f'{self.title} - {self.trip.name}'
+        plan_name = self.plan.name if self.plan else "No Plan"
+        return f'{self.title} - {plan_name} - {self.trip.name}'
     
     class Meta:
         ordering = ['-added_date']

@@ -38,4 +38,6 @@ urlpatterns = [
     path('trip/<int:trip_pk>/add_hotel_to_list/', AddHotelToListView.as_view(), name='add_hotel_to_list'),
     path('trip/<int:trip_pk>/add_custom_item/', AddCustomItemToListView.as_view(), name='add_custom_item'),
     path('trip/<int:trip_pk>/remove_list_item/<int:item_id>/', RemoveListItemView.as_view(), name='remove_list_item'),
+    
+    path('trip/<int:trip_pk>/plan/<int:plan_pk>/list_items/', GetPlanListItemsView.as_view(), name='get_plan_list_items'),
 ]

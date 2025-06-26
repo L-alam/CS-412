@@ -87,7 +87,21 @@ class ShowTripDetailView(DetailView):
         context['is_organizer'] = self.object.members.filter(user=self.request.user, role='organizer').exists()
         context['flight_search_form'] = FlightSearchForm()
         context['hotel_search_form'] = HotelSearchForm()
-        context['list_items'] = self.object.list_items.all()  # Add this line
+        
+        # Add plan-specific list items to context
+        plans_with_items = []
+        for plan in self.object.get_plans():
+            plans_with_items.append({
+                'plan': plan,
+                'list_items': plan.get_list_items(),
+                'flight_items': plan.get_flight_items(),
+                'hotel_items': plan.get_hotel_items(),
+                'custom_items': plan.get_custom_items(),
+            })
+        
+        context['plans_with_items'] = plans_with_items
+        context['selected_plan'] = self.object.get_plans().filter(is_selected=True).first()
+        
         return context
 
 
@@ -596,7 +610,7 @@ class HotelSearchView(View):
 
 
 class AddFlightToListView(View):
-    '''Add a flight to the trip's list'''
+    '''Add a flight to the trip's list for a specific plan'''
     
     def post(self, request, *args, **kwargs):
         trip_pk = kwargs.get('trip_pk')
@@ -612,6 +626,13 @@ class AddFlightToListView(View):
         try:
             data = json.loads(request.body)
             
+            # Get the plan ID from the request
+            plan_id = data.get('plan_id')
+            if not plan_id:
+                return JsonResponse({'error': 'Plan ID is required'}, status=400)
+            
+            plan = get_object_or_404(Plan, pk=plan_id, trip=trip)
+            
             # Validate required fields
             required_fields = ['title', 'departure_code', 'arrival_code', 'departure_time', 'arrival_time', 'duration_formatted', 'airline', 'price']
             for field in required_fields:
@@ -621,6 +642,7 @@ class AddFlightToListView(View):
             # Create the list item
             list_item = TripListItem.objects.create(
                 trip=trip,
+                plan=plan,  # Associate with specific plan
                 added_by=request.user,
                 item_type='flight',
                 title=f"{data['departure_code']} → {data['arrival_code']}",
@@ -640,8 +662,9 @@ class AddFlightToListView(View):
             
             return JsonResponse({
                 'success': True,
-                'message': 'Flight added to list!',
-                'item_id': list_item.id
+                'message': f'Flight added to {plan.name}!',
+                'item_id': list_item.id,
+                'plan_id': plan.id
             })
             
         except json.JSONDecodeError:
@@ -651,7 +674,7 @@ class AddFlightToListView(View):
 
 
 class AddHotelToListView(View):
-    '''Add a hotel to the trip's list'''
+    '''Add a hotel to the trip's list for a specific plan'''
     
     def post(self, request, *args, **kwargs):
         trip_pk = kwargs.get('trip_pk')
@@ -668,7 +691,14 @@ class AddHotelToListView(View):
             data = json.loads(request.body)
             print(f"Received hotel data: {data}")  # Debug line
             
-            # Get required fields with defaults to match the flight pattern
+            # Get the plan ID from the request
+            plan_id = data.get('plan_id')
+            if not plan_id:
+                return JsonResponse({'error': 'Plan ID is required'}, status=400)
+            
+            plan = get_object_or_404(Plan, pk=plan_id, trip=trip)
+            
+            # Get required fields with defaults
             name = data.get('name', 'Unknown Hotel')
             rating = data.get('rating', 0)
             star_rating = data.get('star_rating', 0)
@@ -680,7 +710,7 @@ class AddHotelToListView(View):
             property_token = data.get('property_token', '')
             reviews = data.get('reviews', 0)
             
-            # Create description with rating and amenities (like flight description)
+            # Create description with rating and amenities
             amenities_text = ', '.join(amenities[:3])
             if len(amenities) > 3:
                 amenities_text += f" +{len(amenities) - 3} more"
@@ -689,12 +719,13 @@ class AddHotelToListView(View):
             if amenities_text:
                 description += f" • {amenities_text}"
             
-            # Use the total price value for the price field (like flights use price)
+            # Use the total price value for the price field
             price_to_store = total_price_value if total_price_value > 0 else price_per_night_value
             
-            # Create the list item (same pattern as flight)
+            # Create the list item
             list_item = TripListItem.objects.create(
                 trip=trip,
+                plan=plan,  # Associate with specific plan
                 added_by=request.user,
                 item_type='hotel',
                 title=name,
@@ -718,8 +749,9 @@ class AddHotelToListView(View):
             
             return JsonResponse({
                 'success': True,
-                'message': 'Hotel added to list!',
-                'item_id': list_item.id
+                'message': f'Hotel added to {plan.name}!',
+                'item_id': list_item.id,
+                'plan_id': plan.id
             })
             
         except json.JSONDecodeError as e:
@@ -730,10 +762,11 @@ class AddHotelToListView(View):
             import traceback
             traceback.print_exc()
             return JsonResponse({'error': str(e)}, status=500)
+        
 
 
 class AddCustomItemToListView(View):
-    '''Add a custom item to the trip's list'''
+    '''Add a custom item to the trip's list for a specific plan'''
     
     def post(self, request, *args, **kwargs):
         trip_pk = kwargs.get('trip_pk')
@@ -749,6 +782,13 @@ class AddCustomItemToListView(View):
         try:
             data = json.loads(request.body)
             print(f"Received custom item data: {data}")  # Debug line
+            
+            # Get the plan ID from the request
+            plan_id = data.get('plan_id')
+            if not plan_id:
+                return JsonResponse({'error': 'Plan ID is required'}, status=400)
+            
+            plan = get_object_or_404(Plan, pk=plan_id, trip=trip)
             
             title = data.get('title', '').strip()
             price = data.get('price')
@@ -769,10 +809,11 @@ class AddCustomItemToListView(View):
             # Create the list item
             list_item = TripListItem.objects.create(
                 trip=trip,
+                plan=plan,  # Associate with specific plan
                 added_by=request.user,
                 item_type='custom',
                 title=title,
-                description='',  # Empty description for custom items now
+                description='',  # Empty description for custom items
                 price=price_value,
                 item_data={
                     'custom_title': title,
@@ -784,8 +825,9 @@ class AddCustomItemToListView(View):
             
             return JsonResponse({
                 'success': True,
-                'message': 'Item added to list!',
-                'item_id': list_item.id
+                'message': f'Item added to {plan.name}!',
+                'item_id': list_item.id,
+                'plan_id': plan.id
             })
             
         except json.JSONDecodeError as e:
@@ -796,7 +838,8 @@ class AddCustomItemToListView(View):
             import traceback
             traceback.print_exc()
             return JsonResponse({'error': str(e)}, status=500)
-
+        
+    
 
 class RemoveListItemView(View):
     '''Remove an item from the trip's list'''
@@ -835,6 +878,46 @@ class RemoveListItemView(View):
             return JsonResponse({'error': str(e)}, status=500)
 
 
+class GetPlanListItemsView(View):
+    '''Get list items for a specific plan via AJAX'''
+    
+    def get(self, request, *args, **kwargs):
+        trip_pk = kwargs.get('trip_pk')
+        plan_pk = kwargs.get('plan_pk')
+        
+        trip = get_object_or_404(Trip, pk=trip_pk)
+        plan = get_object_or_404(Plan, pk=plan_pk, trip=trip)
+        
+        # Check permissions
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+            
+        if not trip.is_member(request.user):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+        
+        try:
+            list_items = []
+            for item in plan.get_list_items():
+                list_items.append({
+                    'id': item.id,
+                    'item_type': item.item_type,
+                    'title': item.title,
+                    'description': item.description,
+                    'price': str(item.price) if item.price else None,
+                    'added_by': item.added_by.username,
+                    'added_date': item.added_date.strftime('%b %j, %Y'),
+                    'can_delete': item.added_by == request.user or trip.is_organizer(request.user)
+                })
+            
+            return JsonResponse({
+                'success': True,
+                'plan_id': plan.id,
+                'plan_name': plan.name,
+                'items': list_items
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
 
 
 # {% extends 'project/base.html' %}
