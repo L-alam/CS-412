@@ -748,12 +748,23 @@ class AddCustomItemToListView(View):
         
         try:
             data = json.loads(request.body)
+            print(f"Received custom item data: {data}")  # Debug line
             
             title = data.get('title', '').strip()
-            description = data.get('description', '').strip()
+            price = data.get('price')
             
             if not title:
                 return JsonResponse({'error': 'Title is required'}, status=400)
+            
+            # Convert price to decimal if provided
+            price_value = None
+            if price is not None and price != '':
+                try:
+                    price_value = float(price)
+                    if price_value < 0:
+                        return JsonResponse({'error': 'Price cannot be negative'}, status=400)
+                except (ValueError, TypeError):
+                    return JsonResponse({'error': 'Invalid price format'}, status=400)
             
             # Create the list item
             list_item = TripListItem.objects.create(
@@ -761,12 +772,15 @@ class AddCustomItemToListView(View):
                 added_by=request.user,
                 item_type='custom',
                 title=title,
-                description=description,
+                description='',  # Empty description for custom items now
+                price=price_value,
                 item_data={
                     'custom_title': title,
-                    'custom_description': description,
+                    'custom_price': price_value,
                 }
             )
+            
+            print(f"Successfully created custom list item: {list_item.id}")  # Debug line
             
             return JsonResponse({
                 'success': True,
@@ -774,9 +788,13 @@ class AddCustomItemToListView(View):
                 'item_id': list_item.id
             })
             
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            print(f"JSON decode error: {e}")
             return JsonResponse({'error': 'Invalid JSON data'}, status=400)
         except Exception as e:
+            print(f"Error creating custom list item: {e}")
+            import traceback
+            traceback.print_exc()
             return JsonResponse({'error': str(e)}, status=500)
 
 
@@ -787,28 +805,35 @@ class RemoveListItemView(View):
         trip_pk = kwargs.get('trip_pk')
         item_id = kwargs.get('item_id')
         
+        print(f"Remove request: trip_pk={trip_pk}, item_id={item_id}")  # Debug line
+        
         trip = get_object_or_404(Trip, pk=trip_pk)
         list_item = get_object_or_404(TripListItem, id=item_id, trip=trip)
+        
+        print(f"Found item: {list_item.title}")  # Debug line
         
         # Check permissions
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'Authentication required'}, status=401)
             
         if not trip.is_member(request.user):
-            return JsonResponse({'error': 'Permission denied'}, status=403)
+            return JsonResponse({'error': 'Permission denied - not a trip member'}, status=403)
         
         # Allow item creator or trip organizers to delete
         if list_item.added_by != request.user and not trip.is_organizer(request.user):
-            return JsonResponse({'error': 'Permission denied'}, status=403)
+            return JsonResponse({'error': 'Permission denied - not item creator or organizer'}, status=403)
         
         try:
             list_item.delete()
+            print(f"Successfully deleted item {item_id}")  # Debug line
             return JsonResponse({
                 'success': True,
                 'message': 'Item removed from list!'
             })
         except Exception as e:
+            print(f"Error deleting item: {e}")  # Debug line
             return JsonResponse({'error': str(e)}, status=500)
+
 
 
 

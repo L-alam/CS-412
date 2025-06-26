@@ -249,17 +249,18 @@
         <!-- Add Item Form (hidden by default) -->
         <div class="add-item-form" id="add-item-form" style="display: none;">
             <div class="form-group">
-                <input type="text" id="item-title" placeholder="Item title" class="form-input">
+                <input type="text" id="item-title" placeholder="Item title" class="form-input" required>
             </div>
             <div class="form-group">
-                <textarea id="item-description" placeholder="Description (optional)" class="form-input"></textarea>
+                <input type="number" id="item-price" placeholder="Price (optional)" class="form-input" step="0.01" min="0">
+                <small class="help-text">Enter price</small>
             </div>
             <div class="form-actions">
                 <button class="btn-save" onclick="addCustomItem()">Save Item</button>
                 <button class="btn-cancel" onclick="hideAddItemForm()">Cancel</button>
             </div>
         </div>
-        
+
         <div class="content-list" id="trip-list-content">
             <!-- Display existing saved items -->
             {% for item in list_items %}
@@ -269,7 +270,9 @@
                         {% if item.item_type == 'flight' %}✈️{% elif item.item_type == 'hotel' %}🏨{% else %}📝{% endif %}
                         {{ item.title }}
                     </div>
-                    <div class="item-description">{{ item.description }}</div>
+                    {% if item.item_type != 'custom' %}
+                        <div class="item-description">{{ item.description }}</div>
+                    {% endif %}
                     <small class="added-info">Added by {{ item.added_by.username }} on {{ item.added_date|date:"M j, Y" }}</small>
                 </div>
                 {% if item.price %}
@@ -295,6 +298,7 @@
                 <button class="page-btn" disabled>Next →</button>
             </div>
         </div>
+
     </div>  
 </div>
 
@@ -556,12 +560,13 @@ function showAddItemForm() {
 function hideAddItemForm() {
     document.getElementById('add-item-form').style.display = 'none';
     document.getElementById('item-title').value = '';
-    document.getElementById('item-description').value = '';
+    document.getElementById('item-price').value = '';
 }
+
 
 function addCustomItem() {
     const title = document.getElementById('item-title').value;
-    const description = document.getElementById('item-description').value;
+    const price = document.getElementById('item-price').value;
     
     if (!title.trim()) {
         alert('Please enter a title for the item');
@@ -570,32 +575,45 @@ function addCustomItem() {
     
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     
+    const itemData = {
+        title: title,
+        price: price ? parseFloat(price) : null
+    };
+    
+    console.log('Adding custom item:', itemData); // Debug line
+    
     fetch(`{% url 'add_custom_item' trip.pk %}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': csrfToken,
         },
-        body: JSON.stringify({
-            title: title,
-            description: description
-        })
+        body: JSON.stringify(itemData)
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Custom item response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('Custom item response data:', data);
         if (data.success) {
             showSuccessMessage(data.message);
             hideAddItemForm();
             refreshListTab();
         } else {
+            console.error('Server error:', data.error);
             alert('Error: ' + (data.error || 'Failed to add item'));
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('Failed to add custom item');
+        console.error('Network error:', error);
+        alert('Failed to add custom item: ' + error.message);
     });
 }
+
 
 document.addEventListener('DOMContentLoaded', function() {
     const planTags = document.querySelectorAll('.plan-tag:not(.empty)');
@@ -908,20 +926,34 @@ function removeListItem(itemId) {
         return;
     }
     
+    console.log('Removing item:', itemId); // Debug line
+    
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     
-    fetch(`/trip/{{ trip.pk }}/remove_list_item/${itemId}/`, {
+    // Use Django URL template tag instead of hardcoded URL
+    const removeUrl = `{% url 'remove_list_item' trip.pk 0 %}`.replace('0', itemId);
+    
+    console.log('Remove URL:', removeUrl); // Debug line
+    
+    fetch(removeUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': csrfToken,
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Remove response status:', response.status); // Debug line
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('Remove response data:', data); // Debug line
         if (data.success) {
             showSuccessMessage(data.message);
-            // Remove the item from the DOM
+            // Remove the item from the DOM immediately
             const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
             if (itemElement) {
                 itemElement.remove();
@@ -933,12 +965,13 @@ function removeListItem(itemId) {
                 showEmptyListMessage();
             }
         } else {
+            console.error('Server error:', data.error);
             alert('Error: ' + (data.error || 'Failed to remove item'));
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('Failed to remove item');
+        console.error('Network error:', error);
+        alert('Failed to remove item: ' + error.message);
     });
 }
 
@@ -2255,6 +2288,52 @@ document.head.appendChild(style);
         margin: 0;
         align-self: flex-end;
     }
+}
+
+.help-text {
+    display: block;
+    color: #666;
+    font-size: 12px;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.form-group input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-group input[type="number"]:focus {
+    outline: none;
+    border-color: #3b5998;
+    box-shadow: 0 0 0 2px rgba(59, 89, 152, 0.1);
+}
+
+/* Ensure custom items without description still look good */
+.list-item .item-main {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.list-item .item-title {
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+}
+
+.list-item .item-description {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.list-item .added-info {
+    color: #6c757d;
+    font-size: 12px;
 }
 
 </style>
