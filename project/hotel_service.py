@@ -2,9 +2,11 @@ import requests
 import os
 from django.conf import settings
 
+# A class that handles hotel search with the SerpAPI Google Hotels API or with oviding mock data when no API key is available. 
+# It searches for accommodations based on city, dates, and guest count, then formats with pricing, ratings, amenities, and other hotel details
+
 class HotelSearchService:
     def __init__(self):
-        # Get API key from settings (same as flights)
         self.api_key = getattr(settings, 'SERPAPI_KEY', None)
         self.base_url = "https://serpapi.com/search.json"
     
@@ -13,7 +15,6 @@ class HotelSearchService:
         Search for hotels using SerpAPI Google Hotels or return mock data
         """
         if not self.api_key:
-            # Return mock data for development/testing when API key is not set
             return self._get_mock_hotel_data(city, check_in_date, check_out_date)
         
         params = {
@@ -29,7 +30,6 @@ class HotelSearchService:
             'api_key': self.api_key
         }
         
-        # Add pagination token if provided
         if page_token:
             params['next_page_token'] = page_token
         
@@ -38,7 +38,6 @@ class HotelSearchService:
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:
-            # If API fails, return mock data as fallback
             print(f"Hotel API Error: {e}, returning mock data")
             return self._get_mock_hotel_data(city, check_in_date, check_out_date)
     
@@ -188,7 +187,6 @@ class HotelSearchService:
         properties = api_response.get('properties', [])
         
         for hotel in properties:
-            # Handle missing data gracefully
             rate_per_night = hotel.get('rate_per_night', {})
             total_rate = hotel.get('total_rate', {})
             images = hotel.get('images', [])
@@ -207,7 +205,7 @@ class HotelSearchService:
                 'image_url': images[0].get('thumbnail', '') if images else '',
                 'property_token': hotel.get('property_token', ''),
                 'coordinates': hotel.get('gps_coordinates', {}),
-                'raw_data': hotel  # Keep original data for debugging
+                'raw_data': hotel 
             }
             formatted_hotels.append(formatted_hotel)
         

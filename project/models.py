@@ -5,11 +5,12 @@ from django.conf import settings
 
 # Create your models here.
 
+# Django model representing a collaborative trip with basic details (name, dates, status, budget) and methods for managing member access and permissions.
 class Trip(models.Model):
     '''Data on potential Trips'''
     
     name = models.TextField(blank=False)
-    description = models.TextField(blank=True)  # Description field
+    description = models.TextField(blank=True) 
     start_date = models.DateField()
     end_date = models.DateField()
     
@@ -64,7 +65,7 @@ class Trip(models.Model):
         return Trip.STATUS_CHOICES
             
 
-
+# Django model that defines the many-to-many relationship between users and trips, storing membership roles (organizer or member) and join dates.
 class TripMember(models.Model):
     '''Represents membership in a trip - who can view and edit the trip'''
     
@@ -85,9 +86,8 @@ class TripMember(models.Model):
         return f'{self.user.username} - {self.trip.name} ({self.role})'
 
 
-
+# Django model representing a user profile with personal information and methods for managing friend relationships and suggestions
 class Profile(models.Model):
-    # Make it nullable for now to handle existing data
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trip_profile', null=True, blank=True)
     first_name = models.TextField(blank=False)
     last_name = models.TextField(blank=False)
@@ -146,7 +146,7 @@ class Profile(models.Model):
         ).delete()
     
 
-    
+# Django model that creates a bidirectional friendship relationship between two Profile objects with a timestamp.
 class Friend(models.Model):
     '''Represents a friendship between two profiles.'''
     
@@ -159,16 +159,14 @@ class Friend(models.Model):
         return f'{self.profile1.first_name} {self.profile1.last_name} & {self.profile2.first_name} {self.profile2.last_name}'
         
 
-
+# Django model representing different travel plan options for a trip, with methods to retrieve associated destinations and list items.
 class Plan(models.Model):
     trip = models.ForeignKey("Trip", on_delete=models.CASCADE, related_name="plans")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     name = models.TextField(blank=False, help_text="e.g., 'Option A', 'Beach Route', 'Budget Plan'")
     
-    # Plan selection
-    is_selected = models.BooleanField(default=False)  # Mark the chosen plan
+    is_selected = models.BooleanField(default=False)  
     
-    # Optional for now
     estimated_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True, null=True)
     
@@ -199,20 +197,18 @@ class Plan(models.Model):
         ordering = ['-created_date']
 
 
+# Django model representing a specific city/country destination within a travel plan, including visit order and optional details like dates and costs.
 class Destination(models.Model):
     plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="destinations")
     city = models.TextField(blank=False)
     country = models.TextField(blank=False)
     
-    # Extra destination details
     arrival_date = models.DateTimeField(null=True, blank=True)
     departure_date = models.DateTimeField(null=True, blank=True)
     nights_staying = models.IntegerField(null=True, blank=True)
     
-    # For multi-city trips
     order = models.IntegerField(default=1, help_text="Order of visit in this plan")
     
-    # Optional details
     notes = models.TextField(blank=True)
     estimated_cost = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     
@@ -220,7 +216,7 @@ class Destination(models.Model):
         return f'{self.city} - {self.plan}'
 
 
-
+# Django model for storing destinations that users want to visit in the future, with optional target year.
 class WishlistItem(models.Model):
     '''A place that a user wants to visit in their wishlist.'''
     
@@ -237,8 +233,9 @@ class WishlistItem(models.Model):
         ordering = ['-added_date']
 
 
+# Django model representing lodging options for a travel plan with pricing and booking information.
 class Accommodation(models.Model):
-    plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="accommodations")  # Fixed: changed from "destinations"
+    plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="accommodations")  
     added_by = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.TextField()
     location = models.TextField()
@@ -251,7 +248,7 @@ class Accommodation(models.Model):
         return f'{self.name} - {self.plan.trip.name}' 
 
 
-
+# Django model for tracking costs and expenses associated with a specific travel plan.
 class Expense(models.Model):
     plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="expenses")
     added_by = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -263,6 +260,7 @@ class Expense(models.Model):
         return f'{self.description} - ${self.amount}'
 
 
+# Django model representing flight options for a travel plan with airline, route, and classification details.
 class Flight(models.Model):
     FLIGHT_TYPE_CHOICES = [
         ('outbound', 'Outbound'),
@@ -294,7 +292,7 @@ class Flight(models.Model):
     #     ordering = ['departure_date']
 
 
-
+# Django model for storing user-selected items (flights, hotels, custom items) within specific trip plans, using JSON data for flexible item-specific information.
 class TripListItem(models.Model):
     '''Items saved to a trip's list (flights, hotels, custom items)'''
     
@@ -308,11 +306,10 @@ class TripListItem(models.Model):
     plan = models.ForeignKey("Plan", on_delete=models.CASCADE, related_name="list_items", null=True, blank=True)  # NEW FIELD
     added_by = models.ForeignKey(User, on_delete=models.CASCADE)
     item_type = models.CharField(max_length=20, choices=ITEM_TYPES)
-    title = models.TextField()  # Flight route or hotel name
-    description = models.TextField(blank=True)  # Additional details
+    title = models.TextField()
+    description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     
-    # JSON field to store item-specific data
     item_data = models.JSONField(default=dict, blank=True)
     
     added_date = models.DateTimeField(auto_now_add=True)

@@ -1,6 +1,7 @@
 from django import forms
 from .models import *
 
+# Form for creating new trips with name, description, and date range fields using date picker widgets.
 class CreateTripForm(forms.ModelForm):
     '''Adding a Trip to the database.'''
     
@@ -12,7 +13,7 @@ class CreateTripForm(forms.ModelForm):
             'end_date': forms.DateInput(attrs={'type': 'date'}),
         }
 
-
+# Form for creating travel plans with just a name field.
 class CreatePlanForm(forms.ModelForm):
     '''Adding a Plan to the database'''
     
@@ -20,13 +21,13 @@ class CreatePlanForm(forms.ModelForm):
         model = Plan
         fields = ['name']
 
-
+# Form for adding destinations to a user's travel wishlist with optional target year.
 class AddWishlistItemForm(forms.ModelForm):
     class Meta:
         model = WishlistItem
         fields = ['destination_name', 'target_year']
         
-
+# Form for creating user profiles with basic contact information fields.
 class CreateProfileForm(forms.ModelForm):
     '''Adding a Profile to the database.'''
 
@@ -36,7 +37,7 @@ class CreateProfileForm(forms.ModelForm):
         fields = ['first_name', 'last_name', 'email']
 
 
-
+# Flight search form with departure/arrival cities, dates, travel class, and passenger count for API queries.
 class FlightSearchForm(forms.Form):
     '''Form for searching flights using SerpAPI'''
     
@@ -97,7 +98,7 @@ class FlightSearchForm(forms.Form):
         })
     )
 
-
+# Form with destination, check-in/out dates, and guest count parameters for Hotel API requests.
 class HotelSearchForm(forms.Form):
     '''Form for searching hotels using SerpAPI'''
     

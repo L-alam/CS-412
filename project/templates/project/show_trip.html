@@ -90,7 +90,7 @@
                         <span class="selected-icon">✓</span>
                     {% endif %}
                     
-                    <!-- Add delete button for plans -->
+                    <!-- delete button for plans -->
                     {% if is_organizer or plan.created_by == request.user %}
                         <a href="{% url 'delete_plan' trip.pk plan.pk %}" class="delete-plan-btn" onclick="event.stopPropagation(); return confirm('Delete this plan?')" title="Delete plan">×</a>
                     {% endif %}
@@ -388,43 +388,42 @@
             btn.addEventListener('click', function() {
                 const targetTab = this.dataset.tab;
                 
-                // Remove active class from all tabs and contents
                 tabBtns.forEach(b => b.classList.remove('active'));
                 tabContents.forEach(c => c.classList.remove('active'));
                 
-                // Add active class to clicked tab and corresponding content
                 this.classList.add('active');
                 document.getElementById(targetTab + '-tab').classList.add('active');
                 
-                // Load plan-specific content when switching to list tab
                 if (targetTab === 'list' && currentSelectedPlan) {
                     loadPlanListItems(currentSelectedPlan);
                 }
             });
         });
         
-        // Initialize plan selection functionality
+        // Initialize plan selection
         initializePlanSelection();
         
-        // Load initial list content if on list tab
+        // Load initial list content
         if (currentSelectedPlan) {
             loadPlanListItems(currentSelectedPlan);
         }
     });
     
+    /**
+    * Sets up interactive plan selection functionality, allowing users to click between different trip plans.
+    * Initializes the default selected plan
+    */
     function initializePlanSelection() {
         const planTags = document.querySelectorAll('.plan-tag:not(.empty)');
         const planDestinations = document.querySelectorAll('.plan-destinations');
         const destinationsSection = document.querySelector('.destinations-section');
         
-        // Show destinations for selected plan on page load
         const selectedPlan = document.querySelector('.plan-tag.selected');
         if (selectedPlan) {
             const planId = selectedPlan.getAttribute('data-plan-id');
             showDestinationsForPlan(planId);
             currentSelectedPlan = parseInt(planId);
         } else if (planTags.length > 0) {
-            // Select first plan if no plan is selected
             const firstPlan = planTags[0];
             const planId = firstPlan.getAttribute('data-plan-id');
             firstPlan.classList.add('selected');
@@ -439,13 +438,10 @@
             tag.addEventListener('click', function() {
                 const planId = parseInt(this.getAttribute('data-plan-id'));
                 
-                // Remove selected class from all plans
                 planTags.forEach(t => t.classList.remove('selected'));
                 
-                // Add selected class to clicked plan
                 this.classList.add('selected');
                 
-                // Update selected icon
                 planTags.forEach(t => {
                     const icon = t.querySelector('.selected-icon');
                     if (icon) icon.remove();
@@ -455,29 +451,24 @@
                     this.insertAdjacentHTML('beforeend', '<span class="selected-icon">✓</span>');
                 }
                 
-                // Show destinations section and destinations for this plan
                 destinationsSection.style.display = 'block';
                 showDestinationsForPlan(planId);
                 
-                // Update current selected plan
                 currentSelectedPlan = planId;
                 
-                // Reload list items if on list tab
                 const activeTab = document.querySelector('.tab-btn.active');
                 if (activeTab && activeTab.dataset.tab === 'list') {
                     loadPlanListItems(planId);
                 }
-                
-                // Update tab headers to show plan name
+
                 updateTabHeaders();
             });
         });
         
+        // Show destinations for selected plan
         function showDestinationsForPlan(planId) {
-            // Hide all plan destinations
             planDestinations.forEach(pd => pd.classList.remove('active'));
             
-            // Show destinations for selected plan
             const targetDestinations = document.querySelector(`[data-plan="${planId}"]`);
             if (targetDestinations) {
                 targetDestinations.classList.add('active');
@@ -485,10 +476,12 @@
         }
     }
     
+    /**
+    * Updates the tab headers to include the currently selected plan name or resets them to default text if no plan is selected.
+    */
     function updateTabHeaders() {
         const planName = getCurrentPlanName();
         
-        // Update tab headers to include plan name
         const flightHeader = document.querySelector('#flights-tab .tab-header h3');
         const hotelHeader = document.querySelector('#housing-tab .tab-header h3');
         const listHeader = document.querySelector('#list-tab .tab-header h3');
@@ -509,6 +502,10 @@
         return plan ? plan.name : null;
     }
     
+
+    /**
+    * Loads items based on plan selected
+    */ 
     function loadPlanListItems(planId) {
         if (!planId) {
             showNoItemsMessage('No plan selected');
@@ -533,11 +530,14 @@
             });
     }
     
+
+    /**
+    * Displays a list of items for a specific plan by clearing existing content and rendering new item elements or showing an empty state message.
+    */
     function displayPlanListItems(items, planName) {
         const listContent = document.getElementById('trip-list-content');
         const pagination = listContent.querySelector('.pagination');
         
-        // Clear existing items (but keep pagination)
         const existingItems = listContent.querySelectorAll('.list-item, .empty-list');
         existingItems.forEach(item => item.remove());
         
@@ -546,19 +546,19 @@
             return;
         }
         
-        // Create and insert items
         items.forEach(item => {
             const itemElement = createListItemElement(item);
             listContent.insertBefore(itemElement, pagination);
         });
         
-        // Update pagination info
         const pageInfo = pagination.querySelector('.page-info');
         if (pageInfo) {
             pageInfo.textContent = `${items.length} item${items.length !== 1 ? 's' : ''} in ${planName}`;
         }
     }
+
     
+    // Creates and returns a DOM element for a list item with appropriate icon, title, description, price, and delete button based on the item's type and permissions.
     function createListItemElement(item) {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'list-item saved-item';
@@ -606,11 +606,11 @@
         return itemDiv;
     }
     
+    //Displays an empty state message in the list content area when no items are available for the current plan.
     function showNoItemsMessage(message) {
         const listContent = document.getElementById('trip-list-content');
         const pagination = listContent.querySelector('.pagination');
         
-        // Clear existing items
         const existingItems = listContent.querySelectorAll('.list-item, .empty-list');
         existingItems.forEach(item => item.remove());
         
@@ -624,7 +624,7 @@
         listContent.insertBefore(emptyMessage, pagination);
     }
     
-    // Flight Search Functionality (Updated to include plan)
+    // Flight Search Functionality
     let currentSearchParams = {};
     let nextPageToken = null;
     
@@ -642,7 +642,6 @@
         const form = document.getElementById('flight-search-form');
         const formData = new FormData(form);
         
-        // Build search parameters
         const searchParams = {
             departure_city: formData.get('departure_city'),
             arrival_city: formData.get('arrival_city'),
@@ -650,22 +649,19 @@
             return_date: formData.get('return_date'),
             travel_class: formData.get('travel_class'),
             adults: formData.get('adults'),
-            plan_id: currentSelectedPlan  // Include current plan
+            plan_id: currentSelectedPlan 
         };
         
-        // Add page token if provided
         if (pageToken) {
             searchParams.page_token = pageToken;
         }
         
-        // Store current search params
         currentSearchParams = searchParams;
         
-        // Show loading
         document.getElementById('flight-loading').style.display = 'block';
         document.getElementById('flight-results').style.display = 'none';
         
-        // Make AJAX request
+        // AJAX request
         fetch(`{% url 'search_flights' trip.pk %}`, {
             method: 'POST',
             headers: {
@@ -691,30 +687,27 @@
         });
     }
     
+    // Renders flight search results by clearing the previous results, displaying flight cards for each result, and updating pagination controls.
     function displayFlightResults(data) {
         const resultsContainer = document.getElementById('flight-results');
         const flightList = resultsContainer.querySelector('.flight-list');
         const resultsCount = resultsContainer.querySelector('.results-count');
         
-        // Clear previous results
         flightList.innerHTML = '';
         
-        // Update results count
         resultsCount.textContent = `Found ${data.flights.length} flights for ${getCurrentPlanName()}`;
         
-        // Display flights
         data.flights.forEach(flight => {
             const flightCard = createFlightCard(flight);
             flightList.appendChild(flightCard);
         });
         
-        // Update pagination
         updateFlightPagination(data.pagination);
         
-        // Show results
         resultsContainer.style.display = 'block';
     }
     
+    // Creates flight cards for flight list section
     function createFlightCard(flight) {
         const card = document.createElement('div');
         card.className = 'flight-card';
@@ -777,10 +770,10 @@
         return card;
     }
     
+
     function formatTime(timeString) {
         if (!timeString) return 'N/A';
         
-        // Extract time from datetime string (assuming format like "2025-06-27 15:30")
         const timePart = timeString.split(' ')[1];
         if (!timePart) return timeString;
         
@@ -792,20 +785,19 @@
         return `${hour12}:${minutes} ${ampm}`;
     }
     
+
+    // Pagination for Flights
     function updateFlightPagination(pagination) {
         const paginationContainer = document.querySelector('.flight-pagination');
         const pageInfo = paginationContainer.querySelector('.page-info');
         const prevBtn = document.getElementById('prev-flights');
         const nextBtn = document.getElementById('next-flights');
         
-        // Update page info
         pageInfo.textContent = `Showing ${pagination.current_from}-${pagination.current_to}`;
         
-        // Update pagination buttons
         nextBtn.disabled = !pagination.has_next;
         nextPageToken = pagination.next_page_token;
         
-        // Show pagination if there are multiple pages
         if (pagination.has_next || pagination.current_from > 1) {
             paginationContainer.style.display = 'flex';
         } else {
@@ -813,7 +805,6 @@
         }
     }
     
-    // Pagination event listeners
     document.getElementById('next-flights').addEventListener('click', function() {
         if (nextPageToken) {
             searchFlights(nextPageToken);
@@ -858,7 +849,7 @@
         });
     }
     
-    // Hotel Search Functionality (Updated to include plan)
+    // Hotel Search Functionality
     let currentHotelSearchParams = {};
     let nextHotelPageToken = null;
     
@@ -876,29 +867,25 @@
         const form = document.getElementById('hotel-search-form');
         const formData = new FormData(form);
         
-        // Build search parameters
         const searchParams = {
             city: formData.get('city'),
             check_in_date: formData.get('check_in_date'),
             check_out_date: formData.get('check_out_date'),
             adults: formData.get('adults'),
             children: formData.get('children'),
-            plan_id: currentSelectedPlan  // Include current plan
+            plan_id: currentSelectedPlan
         };
         
-        // Add page token if provided
         if (pageToken) {
             searchParams.page_token = pageToken;
         }
         
-        // Store current search params
         currentHotelSearchParams = searchParams;
         
-        // Show loading
         document.getElementById('hotel-loading').style.display = 'block';
         document.getElementById('hotel-results').style.display = 'none';
         
-        // Make AJAX request
+        // AJAX request
         fetch(`{% url 'search_hotels' trip.pk %}`, {
             method: 'POST',
             headers: {
@@ -929,22 +916,17 @@
         const hotelList = resultsContainer.querySelector('.hotel-list');
         const resultsCount = resultsContainer.querySelector('.results-count');
         
-        // Clear previous results
         hotelList.innerHTML = '';
         
-        // Update results count
         resultsCount.textContent = `Found ${data.hotels.length} hotels for ${data.nights} night${data.nights > 1 ? 's' : ''} in ${getCurrentPlanName()}`;
         
-        // Display hotels
         data.hotels.forEach(hotel => {
             const hotelCard = createHotelCard(hotel, data.nights);
             hotelList.appendChild(hotelCard);
         });
         
-        // Update pagination
         updateHotelPagination(data.pagination);
         
-        // Show results
         resultsContainer.style.display = 'block';
     }
     
@@ -952,14 +934,11 @@
         const card = document.createElement('div');
         card.className = 'hotel-card';
         
-        // Create star rating display
         const starRating = generateStarRating(hotel.star_rating);
         
-        // Format amenities (show first 3)
         const displayAmenities = hotel.amenities.slice(0, 3);
         const moreAmenities = hotel.amenities.length > 3 ? `+${hotel.amenities.length - 3} more` : '';
         
-        // Escape quotes in hotel name and amenities for JSON
         const escapedName = hotel.name.replace(/'/g, "\\'").replace(/"/g, '\\"');
         const escapedAmenities = JSON.stringify(hotel.amenities).replace(/'/g, "\\'");
         
@@ -1012,7 +991,6 @@
     function addHotelToListWrapper(name, rating, starRating, pricePerNight, pricePerNightValue, totalPrice, totalPriceValue, amenitiesJson, propertyToken, reviews, planId) {
         console.log('addHotelToListWrapper called with plan:', planId);
         
-        // Parse amenities back from JSON string
         let amenities = [];
         try {
             amenities = JSON.parse(amenitiesJson);
@@ -1054,14 +1032,11 @@
         const prevBtn = document.getElementById('prev-hotels');
         const nextBtn = document.getElementById('next-hotels');
         
-        // Update page info
         pageInfo.textContent = `Showing ${pagination.current_from}-${pagination.current_to}`;
         
-        // Update pagination buttons
         nextBtn.disabled = !pagination.has_next;
         nextHotelPageToken = pagination.next_page_token;
         
-        // Show pagination if there are multiple pages
         if (pagination.has_next || pagination.current_from > 1) {
             paginationContainer.style.display = 'flex';
         } else {
@@ -1069,7 +1044,6 @@
         }
     }
     
-    // Hotel pagination event listeners
     document.getElementById('next-hotels').addEventListener('click', function() {
         if (nextHotelPageToken) {
             searchHotels(nextHotelPageToken);
@@ -1086,7 +1060,6 @@
         
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         
-        // Ensure plan_id is included
         hotelData.plan_id = currentSelectedPlan;
         
         fetch(`{% url 'add_hotel_to_list' trip.pk %}`, {
@@ -1108,7 +1081,6 @@
             console.log('Response data:', data);
             if (data.success) {
                 showSuccessMessage(data.message);
-                // Refresh list if currently viewing this plan's list
                 const activeTab = document.querySelector('.tab-btn.active');
                 if (activeTab && activeTab.dataset.tab === 'list') {
                     loadPlanListItems(currentSelectedPlan);
@@ -1124,7 +1096,7 @@
         });
     }
     
-    // Custom list functionality (updated)
+    // Custom list functionality 
     function showAddItemForm() {
         if (!currentSelectedPlan) {
             alert('Please select a plan first');
@@ -1139,6 +1111,7 @@
         document.getElementById('item-price').value = '';
     }
     
+    // Add Custom Item with Name and Price
     function addCustomItem() {
         if (!currentSelectedPlan) {
             alert('Please select a plan first');
@@ -1226,7 +1199,6 @@
             console.log('Remove response data:', data);
             if (data.success) {
                 showSuccessMessage(data.message);
-                // Reload the current plan's list items
                 if (currentSelectedPlan) {
                     loadPlanListItems(currentSelectedPlan);
                 }
@@ -1243,7 +1215,6 @@
     
     // Function to show success message
     function showSuccessMessage(message) {
-        // Create a temporary success message
         const successDiv = document.createElement('div');
         successDiv.className = 'success-message';
         successDiv.textContent = message;
@@ -1261,13 +1232,12 @@
         
         document.body.appendChild(successDiv);
         
-        // Remove after 3 seconds
         setTimeout(() => {
             successDiv.remove();
         }, 3000);
     }
     
-    // Add CSS animation for success message
+    // CSS animation for success message
     const style = document.createElement('style');
     style.textContent = `
     @keyframes slideIn {
@@ -1336,7 +1306,8 @@
 
 {% endif %}
 
-<style>
+<!-- SHIT TON OF CSS :( -->
+<style>   
 
 .destinations-section {
     margin-bottom: 30px;

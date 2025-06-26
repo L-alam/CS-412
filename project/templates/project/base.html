@@ -129,7 +129,7 @@
     </style>
     
     <script>
-    // Auto-hide success messages after 5 seconds
+    // Automatically hides success messages after 5 seconds with a slide-out animation.
     document.addEventListener('DOMContentLoaded', function() {
         const successMessages = document.querySelectorAll('.alert-success');
         successMessages.forEach(function(message) {
@@ -142,7 +142,7 @@
         });
     });
     
-    // Add slideOut animation
+    // slideOut animation
     const style = document.createElement('style');
     style.textContent = `
     @keyframes slideOut {

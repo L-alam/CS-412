@@ -16,6 +16,7 @@ import json
 
 # Create your views here.
 
+# ListView that displays all trips belonging to the current user on the main dashboard.
 class ShowAllTripsView(ListView):
     '''Create a subclass of ListView to display all possible trip destinations.'''
 
@@ -29,11 +30,10 @@ class ShowAllTripsView(ListView):
     
     def get_queryset(self):
         '''Return trips that belong to the logged-in user.'''
-        # For now, return all trips. You might want to filter by user later
         return Trip.objects.all()
 
 
-
+# CreateView for adding new trips to the database and automatically making the creator an organizer member
 class CreateTripView(CreateView):
     '''Create a new Trip and save it to the database.'''
     model = Trip
@@ -48,7 +48,6 @@ class CreateTripView(CreateView):
         '''Set the user as organizer when creating a trip.'''
         response = super().form_valid(form)
         
-        # Add the creator as an organizer of the trip
         self.object.add_member(self.request.user, role='organizer')
         
         return response
@@ -58,7 +57,7 @@ class CreateTripView(CreateView):
         return reverse('show_trip', kwargs={'pk': self.object.pk})
 
 
-
+# DetailView that displays comprehensive trip information including plans, members, and search functionality with member access control
 class ShowTripDetailView(DetailView):
     model = Trip
     template_name = 'project/show_trip.html'
@@ -75,7 +74,6 @@ class ShowTripDetailView(DetailView):
         if not request.user.is_authenticated:
             return redirect('login')
             
-        # Check if user is a member of the trip
         if not trip.is_member(request.user):
             messages.error(request, "You don't have permission to view this trip.")
             return redirect('show_all')
@@ -88,10 +86,8 @@ class ShowTripDetailView(DetailView):
         context['flight_search_form'] = FlightSearchForm()
         context['hotel_search_form'] = HotelSearchForm()
         
-        # Add STATUS_CHOICES to context for the template
         context['STATUS_CHOICES'] = Trip.STATUS_CHOICES
         
-        # Add plan-specific list items to context
         plans_with_items = []
         for plan in self.object.get_plans():
             plans_with_items.append({
@@ -109,7 +105,7 @@ class ShowTripDetailView(DetailView):
 
 
 
-
+# CreateView for creating new travel plans with destinations for a specific trip.
 class CreatePlanView(CreateView):
     model = Plan
     template_name = 'project/create_plan_form.html'
@@ -125,15 +121,12 @@ class CreatePlanView(CreateView):
         return context
     
     def form_valid(self, form):
-        # Set the trip and user before saving
         trip = get_object_or_404(Trip, pk=self.kwargs['trip_pk'])
         form.instance.trip = trip
         form.instance.created_by = self.request.user
         
-        # Handle destinations from the form
         response = super().form_valid(form)
         
-        # Process destination data from POST
         plan = form.instance
         destination_count = 1
         
@@ -159,7 +152,7 @@ class CreatePlanView(CreateView):
         return reverse('show_trip', kwargs={'pk': self.kwargs['trip_pk']})
 
 
-
+# DetailView that displays a user's profile information including friends and wishlist items
 class ShowProfilePageView(DetailView):
     """Show the current user's profile"""
     model = Profile
@@ -172,11 +165,10 @@ class ShowProfilePageView(DetailView):
     
     def dispatch(self, request, *args, **kwargs):
         """Ensure user can only view their own profile or make it accessible to all"""
-        # For now, allow viewing any profile. You might want to restrict this later
         return super().dispatch(request, *args, **kwargs)
     
 
-
+# CreateView for adding new destinations to a user's travel wishlist
 class AddWishlistItemView(CreateView):
     model = WishlistItem
     form_class = AddWishlistItemForm
@@ -207,7 +199,7 @@ class AddWishlistItemView(CreateView):
         return reverse('show_profile', kwargs={'pk': self.kwargs['pk']})
 
 
-
+# DetailView that shows suggested friends for the current user's profile
 class FriendSuggestionsView(DetailView):
     '''Show friend suggestions for a profile.'''
     model = Profile
@@ -227,7 +219,7 @@ class FriendSuggestionsView(DetailView):
         return super().dispatch(request, *args, **kwargs)
 
 
-
+# View that handles adding friend relationships between two user profiles.
 class AddFriendView(View):
     '''A view to add a friend relationship between two profiles.'''
     
@@ -248,11 +240,10 @@ class AddFriendView(View):
         
         profile.add_friend(other_profile)
         
-        # Redirect back to friend suggestions
         return redirect('friend_suggestions', pk=pk)
 
 
-
+# View that removes existing friend relationships between two user profiles.
 class RemoveFriendView(View):
     '''A view to remove a friend relationship between two profiles.'''
     
@@ -275,6 +266,8 @@ class RemoveFriendView(View):
         
         return redirect('show_profile', pk=pk)
 
+
+# View that deletes wishlist items from a user's profile.
 class RemoveWishlistItemView(View):
     '''A view to remove a wishlist item.'''
     
@@ -284,17 +277,15 @@ class RemoveWishlistItemView(View):
     
     def get(self, request, *args, **kwargs):
         '''Handle the remove wishlist item request.'''
-        pk = self.kwargs.get('pk')  # profile pk
-        item_pk = self.kwargs.get('item_pk')  # wishlist item pk
+        pk = self.kwargs.get('pk')  
+        item_pk = self.kwargs.get('item_pk') 
         
         profile = get_object_or_404(Profile, pk=pk)
         wishlist_item = get_object_or_404(WishlistItem, pk=item_pk)
         
-        # Add check here if you add user field to Profile model
         if profile.user != request.user:
             return redirect('show_profile', pk=pk)
         
-        # Ensure the wishlist item belongs to this profile
         if wishlist_item.profile != profile:
             return redirect('show_profile', pk=pk)
         
@@ -303,7 +294,7 @@ class RemoveWishlistItemView(View):
         return redirect('show_profile', pk=pk)
 
 
-
+# CreateView that handles both user account creation and profile setup in a single form.
 class CreateProfileView(CreateView):
     '''Create a new Profile and save it to the db.'''
     
@@ -336,7 +327,7 @@ class CreateProfileView(CreateView):
     def get_success_url(self):
         return reverse('show_all')
 
-
+# DetailView that displays available friends who can be invited to join a specific trip.
 class InviteFriendsView(DetailView):
     '''Show the invite friends page for a trip'''
     model = Trip
@@ -362,16 +353,14 @@ class InviteFriendsView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Get user's profile to find their friends
         try:
             user_profile = self.request.user.trip_profile.first()
             if user_profile:
-                # Get friends who aren't already members of this trip
                 friends = user_profile.get_friends()
                 current_member_users = [member.user for member in self.object.get_members()]
                 available_friends = [friend for friend in friends if friend.user not in current_member_users]
                 context['available_friends'] = available_friends
-                context['user_profile'] = user_profile  # Add this to context
+                context['user_profile'] = user_profile  
             else:
                 context['available_friends'] = []
                 context['user_profile'] = None
@@ -382,7 +371,7 @@ class InviteFriendsView(DetailView):
         return context
 
 
-
+# View that adds users as members to a trip with permission checking.
 class AddTripMemberView(View):
     '''Add a friend to a trip as a member'''
     
@@ -393,7 +382,6 @@ class AddTripMemberView(View):
         trip = get_object_or_404(Trip, pk=trip_pk)
         user_to_add = get_object_or_404(User, pk=user_pk)
         
-        # Check permissions
         if not request.user.is_authenticated:
             return redirect('login')
             
@@ -401,7 +389,6 @@ class AddTripMemberView(View):
             messages.error(request, "You don't have permission to add members to this trip.")
             return redirect('show_trip', pk=trip.pk)
         
-        # Add the user as a member
         if not trip.is_member(user_to_add):
             trip.add_member(user_to_add, role='member')
             messages.success(request, f"Successfully added {user_to_add.username} to the trip!")
@@ -411,7 +398,7 @@ class AddTripMemberView(View):
         return redirect('invite_friends', pk=trip.pk)
 
 
-
+# View that removes members from a trip with organizer permission validation.
 class RemoveTripMemberView(View):
     '''Remove a member from a trip'''
     
@@ -422,7 +409,6 @@ class RemoveTripMemberView(View):
         trip = get_object_or_404(Trip, pk=trip_pk)
         user_to_remove = get_object_or_404(User, pk=user_pk)
         
-        # Check permissions
         if not request.user.is_authenticated:
             return redirect('login')
             
@@ -430,14 +416,12 @@ class RemoveTripMemberView(View):
             messages.error(request, "You don't have permission to remove members from this trip.")
             return redirect('show_trip', pk=trip.pk)
         
-        # Don't allow removing the last organizer
         if trip.get_organizers().count() == 1:
             organizer = trip.get_organizers().first()
             if organizer.user == user_to_remove:
                 messages.error(request, "Cannot remove the last organizer from the trip.")
                 return redirect('show_trip', pk=trip.pk)
         
-        # Remove the member
         trip_member = trip.members.filter(user=user_to_remove).first()
         if trip_member:
             trip_member.delete()
@@ -448,7 +432,7 @@ class RemoveTripMemberView(View):
         return redirect('show_trip', pk=trip.pk)
 
 
-
+# view that handles flight search requests using the SerpAPI and returns formatted JSON results
 class FlightSearchView(View):
     '''AJAX view for searching flights within a trip'''
     
@@ -457,30 +441,25 @@ class FlightSearchView(View):
         trip_pk = kwargs.get('trip_pk')
         trip = get_object_or_404(Trip, pk=trip_pk)
         
-        # Check if user has permission to view this trip
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'Authentication required'}, status=401)
             
         if not trip.is_member(request.user):
             return JsonResponse({'error': 'Permission denied'}, status=403)
         
-        # Parse JSON data from request
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON data'}, status=400)
         
-        # Validate required fields
         required_fields = ['departure_city', 'arrival_city', 'departure_date']
         for field in required_fields:
             if not data.get(field):
                 return JsonResponse({'error': f'Missing required field: {field}'}, status=400)
         
         try:
-            # Initialize flight search service
             flight_service = FlightSearchService()
             
-            # Search for flights
             api_response = flight_service.search_flights(
                 departure_city=data['departure_city'],
                 arrival_city=data['arrival_city'],
@@ -491,10 +470,8 @@ class FlightSearchView(View):
                 page_token=data.get('page_token')
             )
             
-            # Format results for frontend
             formatted_flights = flight_service.format_flight_results(api_response)
             
-            # Get pagination info
             pagination = api_response.get('serpapi_pagination', {})
             
             response_data = {
@@ -523,7 +500,7 @@ class FlightSearchView(View):
             return JsonResponse({'error': f'Flight search failed: {str(e)}'}, status=500)
 
 
-
+# view that processes hotel search requests and returns formatted accommodation data via JSON
 class HotelSearchView(View):
     '''AJAX view for searching hotels within a trip'''
     
@@ -532,26 +509,22 @@ class HotelSearchView(View):
         trip_pk = kwargs.get('trip_pk')
         trip = get_object_or_404(Trip, pk=trip_pk)
         
-        # Check if user has permission to view this trip
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'Authentication required'}, status=401)
             
         if not trip.is_member(request.user):
             return JsonResponse({'error': 'Permission denied'}, status=403)
         
-        # Parse JSON data from request
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON data'}, status=400)
         
-        # Validate required fields
         required_fields = ['city', 'check_in_date', 'check_out_date']
         for field in required_fields:
             if not data.get(field):
                 return JsonResponse({'error': f'Missing required field: {field}'}, status=400)
         
-        # Validate dates
         try:
             from datetime import datetime
             check_in = datetime.strptime(data['check_in_date'], '%Y-%m-%d')
@@ -564,10 +537,8 @@ class HotelSearchView(View):
             return JsonResponse({'error': 'Invalid date format'}, status=400)
         
         try:
-            # Initialize hotel search service
             hotel_service = HotelSearchService()
             
-            # Search for hotels
             api_response = hotel_service.search_hotels(
                 city=data['city'],
                 check_in_date=data['check_in_date'],
@@ -577,13 +548,10 @@ class HotelSearchView(View):
                 page_token=data.get('page_token')
             )
             
-            # Format results for frontend
             formatted_hotels = hotel_service.format_hotel_results(api_response)
             
-            # Get pagination info
             pagination = api_response.get('serpapi_pagination', {})
             
-            # Calculate nights for total price display
             nights = hotel_service._calculate_nights(data['check_in_date'], data['check_out_date'])
             
             response_data = {
@@ -612,6 +580,7 @@ class HotelSearchView(View):
             return JsonResponse({'error': f'Hotel search failed: {str(e)}'}, status=500)
 
 
+# view that saves selected flights to a specific trip plan's list
 class AddFlightToListView(View):
     '''Add a flight to the trip's list for a specific plan'''
     
@@ -619,7 +588,6 @@ class AddFlightToListView(View):
         trip_pk = kwargs.get('trip_pk')
         trip = get_object_or_404(Trip, pk=trip_pk)
         
-        # Check permissions
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'Authentication required'}, status=401)
             
@@ -629,23 +597,20 @@ class AddFlightToListView(View):
         try:
             data = json.loads(request.body)
             
-            # Get the plan ID from the request
             plan_id = data.get('plan_id')
             if not plan_id:
                 return JsonResponse({'error': 'Plan ID is required'}, status=400)
             
             plan = get_object_or_404(Plan, pk=plan_id, trip=trip)
             
-            # Validate required fields
             required_fields = ['title', 'departure_code', 'arrival_code', 'departure_time', 'arrival_time', 'duration_formatted', 'airline', 'price']
             for field in required_fields:
                 if field not in data:
                     return JsonResponse({'error': f'Missing required field: {field}'}, status=400)
             
-            # Create the list item
             list_item = TripListItem.objects.create(
                 trip=trip,
-                plan=plan,  # Associate with specific plan
+                plan=plan, 
                 added_by=request.user,
                 item_type='flight',
                 title=f"{data['departure_code']} → {data['arrival_code']}",
@@ -676,6 +641,7 @@ class AddFlightToListView(View):
             return JsonResponse({'error': str(e)}, status=500)
 
 
+# view that adds selected hotels to a specific trip plan's saved items list.
 class AddHotelToListView(View):
     '''Add a hotel to the trip's list for a specific plan'''
     
@@ -683,7 +649,6 @@ class AddHotelToListView(View):
         trip_pk = kwargs.get('trip_pk')
         trip = get_object_or_404(Trip, pk=trip_pk)
         
-        # Check permissions
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'Authentication required'}, status=401)
             
@@ -692,16 +657,14 @@ class AddHotelToListView(View):
         
         try:
             data = json.loads(request.body)
-            print(f"Received hotel data: {data}")  # Debug line
+            print(f"Received hotel data: {data}")
             
-            # Get the plan ID from the request
             plan_id = data.get('plan_id')
             if not plan_id:
                 return JsonResponse({'error': 'Plan ID is required'}, status=400)
             
             plan = get_object_or_404(Plan, pk=plan_id, trip=trip)
             
-            # Get required fields with defaults
             name = data.get('name', 'Unknown Hotel')
             rating = data.get('rating', 0)
             star_rating = data.get('star_rating', 0)
@@ -713,7 +676,6 @@ class AddHotelToListView(View):
             property_token = data.get('property_token', '')
             reviews = data.get('reviews', 0)
             
-            # Create description with rating and amenities
             amenities_text = ', '.join(amenities[:3])
             if len(amenities) > 3:
                 amenities_text += f" +{len(amenities) - 3} more"
@@ -722,13 +684,11 @@ class AddHotelToListView(View):
             if amenities_text:
                 description += f" • {amenities_text}"
             
-            # Use the total price value for the price field
             price_to_store = total_price_value if total_price_value > 0 else price_per_night_value
             
-            # Create the list item
             list_item = TripListItem.objects.create(
                 trip=trip,
-                plan=plan,  # Associate with specific plan
+                plan=plan, 
                 added_by=request.user,
                 item_type='hotel',
                 title=name,
@@ -748,7 +708,7 @@ class AddHotelToListView(View):
                 }
             )
             
-            print(f"Successfully created hotel list item: {list_item.id}")  # Debug line
+            print(f"Successfully created hotel list item: {list_item.id}")
             
             return JsonResponse({
                 'success': True,
@@ -767,7 +727,7 @@ class AddHotelToListView(View):
             return JsonResponse({'error': str(e)}, status=500)
         
 
-
+# view that creates custom list items for trip plans with user-defined titles and prices
 class AddCustomItemToListView(View):
     '''Add a custom item to the trip's list for a specific plan'''
     
@@ -775,7 +735,6 @@ class AddCustomItemToListView(View):
         trip_pk = kwargs.get('trip_pk')
         trip = get_object_or_404(Trip, pk=trip_pk)
         
-        # Check permissions
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'Authentication required'}, status=401)
             
@@ -784,9 +743,8 @@ class AddCustomItemToListView(View):
         
         try:
             data = json.loads(request.body)
-            print(f"Received custom item data: {data}")  # Debug line
+            print(f"Received custom item data: {data}")
             
-            # Get the plan ID from the request
             plan_id = data.get('plan_id')
             if not plan_id:
                 return JsonResponse({'error': 'Plan ID is required'}, status=400)
@@ -799,7 +757,6 @@ class AddCustomItemToListView(View):
             if not title:
                 return JsonResponse({'error': 'Title is required'}, status=400)
             
-            # Convert price to decimal if provided
             price_value = None
             if price is not None and price != '':
                 try:
@@ -809,14 +766,13 @@ class AddCustomItemToListView(View):
                 except (ValueError, TypeError):
                     return JsonResponse({'error': 'Invalid price format'}, status=400)
             
-            # Create the list item
             list_item = TripListItem.objects.create(
                 trip=trip,
-                plan=plan,  # Associate with specific plan
+                plan=plan,
                 added_by=request.user,
                 item_type='custom',
                 title=title,
-                description='',  # Empty description for custom items
+                description='',
                 price=price_value,
                 item_data={
                     'custom_title': title,
@@ -824,7 +780,7 @@ class AddCustomItemToListView(View):
                 }
             )
             
-            print(f"Successfully created custom list item: {list_item.id}")  # Debug line
+            print(f"Successfully created custom list item: {list_item.id}")
             
             return JsonResponse({
                 'success': True,
@@ -843,7 +799,7 @@ class AddCustomItemToListView(View):
             return JsonResponse({'error': str(e)}, status=500)
         
     
-
+# view that deletes items from trip plan lists with proper permission checking
 class RemoveListItemView(View):
     '''Remove an item from the trip's list'''
     
@@ -851,36 +807,35 @@ class RemoveListItemView(View):
         trip_pk = kwargs.get('trip_pk')
         item_id = kwargs.get('item_id')
         
-        print(f"Remove request: trip_pk={trip_pk}, item_id={item_id}")  # Debug line
+        print(f"Remove request: trip_pk={trip_pk}, item_id={item_id}") 
         
         trip = get_object_or_404(Trip, pk=trip_pk)
         list_item = get_object_or_404(TripListItem, id=item_id, trip=trip)
         
-        print(f"Found item: {list_item.title}")  # Debug line
+        print(f"Found item: {list_item.title}")
         
-        # Check permissions
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'Authentication required'}, status=401)
             
         if not trip.is_member(request.user):
             return JsonResponse({'error': 'Permission denied - not a trip member'}, status=403)
         
-        # Allow item creator or trip organizers to delete
         if list_item.added_by != request.user and not trip.is_organizer(request.user):
             return JsonResponse({'error': 'Permission denied - not item creator or organizer'}, status=403)
         
         try:
             list_item.delete()
-            print(f"Successfully deleted item {item_id}")  # Debug line
+            print(f"Successfully deleted item {item_id}")
             return JsonResponse({
                 'success': True,
                 'message': 'Item removed from list!'
             })
         except Exception as e:
-            print(f"Error deleting item: {e}")  # Debug line
+            print(f"Error deleting item: {e}") 
             return JsonResponse({'error': str(e)}, status=500)
 
 
+# view that retrieves and returns all list items for a specific trip plan.
 class GetPlanListItemsView(View):
     '''Get list items for a specific plan via AJAX'''
     
@@ -891,7 +846,6 @@ class GetPlanListItemsView(View):
         trip = get_object_or_404(Trip, pk=trip_pk)
         plan = get_object_or_404(Plan, pk=plan_pk, trip=trip)
         
-        # Check permissions
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'Authentication required'}, status=401)
             
@@ -923,6 +877,7 @@ class GetPlanListItemsView(View):
             return JsonResponse({'error': str(e)}, status=500)
         
 
+# View that allows trip organizers to update the status of their trips.
 class ChangeTripsStatusView(View):
     '''Change the status of a trip'''
     
@@ -930,7 +885,6 @@ class ChangeTripsStatusView(View):
         trip_pk = kwargs.get('trip_pk')
         trip = get_object_or_404(Trip, pk=trip_pk)
         
-        # Check permissions - only organizers can change status
         if not request.user.is_authenticated:
             return redirect('login')
             
@@ -950,6 +904,7 @@ class ChangeTripsStatusView(View):
         return redirect('show_trip', pk=trip.pk)
     
 
+# View that removes the current user from a trip membership.
 class LeaveTripsView(View):
     '''Remove yourself from a trip'''
     
@@ -964,12 +919,10 @@ class LeaveTripsView(View):
             messages.error(request, "You are not a member of this trip.")
             return redirect('show_all')
         
-        # Check if user is the last organizer
         if trip.is_organizer(request.user) and trip.get_organizers().count() == 1:
             messages.error(request, "You cannot leave the trip as you are the only organizer. Please make someone else an organizer first or delete the trip.")
             return redirect('show_trip', pk=trip.pk)
         
-        # Remove the user from the trip
         trip_member = trip.members.filter(user=request.user).first()
         if trip_member:
             trip_member.delete()
@@ -978,6 +931,7 @@ class LeaveTripsView(View):
         return redirect('show_all')
     
 
+# View that completely deletes a trip and all associated data with organizer permission required.
 class DeleteTripsView(View):
     '''Delete a trip completely'''
     
@@ -1014,6 +968,7 @@ class DeleteTripsView(View):
         return redirect('show_all')
 
 
+# View that removes specific friends from trip membership with organizer permissions.
 class RemoveFriendFromTripsView(View):
     '''Remove a friend from a trip (similar to RemoveTripMemberView but with friend context)'''
     
@@ -1031,14 +986,12 @@ class RemoveFriendFromTripsView(View):
             messages.error(request, "Only organizers can remove members from trips.")
             return redirect('show_trip', pk=trip.pk)
         
-        # Don't allow removing the last organizer
         if trip.get_organizers().count() == 1:
             organizer = trip.get_organizers().first()
             if organizer.user == friend_profile.user:
                 messages.error(request, "Cannot remove the last organizer from the trip.")
                 return redirect('show_trip', pk=trip.pk)
         
-        # Remove the member
         trip_member = trip.members.filter(user=friend_profile.user).first()
         if trip_member:
             trip_member.delete()
@@ -1049,6 +1002,7 @@ class RemoveFriendFromTripsView(View):
         return redirect('show_trip', pk=trip.pk)
 
 
+# View that deletes travel plans from trips with creator or organizer permission validation.
 class DeletePlanView(View):
     '''Delete a plan from a trip'''
     
@@ -1067,7 +1021,6 @@ class DeletePlanView(View):
             messages.error(request, "You don't have permission to delete plans from this trip.")
             return redirect('show_trip', pk=trip.pk)
         
-        # Only plan creator or organizers can delete plans
         if plan.created_by != request.user and not trip.is_organizer(request.user):
             messages.error(request, "You can only delete plans you created, or you must be an organizer.")
             return redirect('show_trip', pk=trip.pk)
@@ -1092,7 +1045,6 @@ class DeletePlanView(View):
             messages.error(request, "You don't have permission to delete plans from this trip.")
             return redirect('show_trip', pk=trip.pk)
         
-        # Only plan creator or organizers can delete plans
         if plan.created_by != request.user and not trip.is_organizer(request.user):
             messages.error(request, "You can only delete plans you created, or you must be an organizer.")
             return redirect('show_trip', pk=trip.pk)
@@ -1103,19 +1055,3 @@ class DeletePlanView(View):
         messages.success(request, f"Plan '{plan_name}' has been deleted.")
         return redirect('show_trip', pk=trip.pk)
     
-
-
-# {% extends 'project/base.html' %}
-
-# {% block content %}
-# <div class="page-header">
-#     <h1>Your New Page</h1>
-# </div>
-
-# <div class="card">
-#     <div class="card-body">
-#         <p>Your content here with automatic styling!</p>
-#         <a href="#" class="btn btn-primary">Action Button</a>
-#     </div>
-# </div>
-# {% endblock %}

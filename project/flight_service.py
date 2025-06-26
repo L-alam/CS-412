@@ -4,9 +4,12 @@ import requests
 import os
 from django.conf import settings
 
+# A class that handles flight search functionality with the SerpAPI Google Flights API or providing mock data when no API key is available. 
+# Manages flight search requests with parameters like departure/arrival cities, dates, and travel class, then formats the API response into a standardized structure
+# methods for converting city names to airport codes, formatting flight durations, and handling multi-leg flights.
+
 class FlightSearchService:
     def __init__(self):
-        # Get API key from settings
         self.api_key = getattr(settings, 'SERPAPI_KEY', None)
         self.base_url = "https://serpapi.com/search.json"
     
@@ -16,10 +19,8 @@ class FlightSearchService:
         Search for flights using SerpAPI Google Flights or return mock data
         """
         if not self.api_key:
-            # Return mock data for development/testing when API key is not set
             return self._get_mock_flight_data(departure_city, arrival_city, departure_date)
         
-        # Convert city names to airport codes if needed
         departure_id = self._get_airport_code(departure_city)
         arrival_id = self._get_airport_code(arrival_city)
         
@@ -36,14 +37,12 @@ class FlightSearchService:
             'api_key': self.api_key
         }
         
-        # Add return date if provided (round trip)
         if return_date:
             params['return_date'] = return_date
-            params['type'] = '1'  # Round trip
+            params['type'] = '1'
         else:
-            params['type'] = '2'  # One way
+            params['type'] = '2'
         
-        # Add pagination token if provided
         if page_token:
             params['next_page_token'] = page_token
         
@@ -52,7 +51,6 @@ class FlightSearchService:
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:
-            # If API fails, return mock data as fallback
             print(f"API Error: {e}, returning mock data")
             return self._get_mock_flight_data(departure_city, arrival_city, departure_date)
     
@@ -60,11 +58,9 @@ class FlightSearchService:
         """Convert city name to airport code or return if already a code"""
         city_input = city_input.strip().upper()
         
-        # If it's already a 3-letter airport code, return it
         if len(city_input) == 3 and city_input.isalpha():
             return city_input
         
-        # Simple city to airport code mapping
         city_mappings = {
             'NEW YORK': 'NYC', 'BOSTON': 'BOS', 'ROME': 'FCO',
             'LOS ANGELES': 'LAX', 'CHICAGO': 'CHI', 'MIAMI': 'MIA',
@@ -131,7 +127,6 @@ class FlightSearchService:
         """Format the API response for easier use in templates"""
         formatted_flights = []
         
-        # Get flights from both best_flights and other_flights
         all_flights = []
         if 'best_flights' in api_response:
             all_flights.extend(api_response['best_flights'])
@@ -139,7 +134,6 @@ class FlightSearchService:
             all_flights.extend(api_response['other_flights'])
         
         for flight in all_flights:
-            # For multi-leg flights, we'll show the first and last airports
             first_flight = flight['flights'][0] if flight['flights'] else None
             last_flight = flight['flights'][-1] if flight['flights'] else None
             
@@ -181,10 +175,8 @@ class FlightSearchService:
         if not flights:
             return "Unknown"
         
-        # If single flight, return that airline
         if len(flights) == 1:
             return flights[0].get('airline', 'Unknown')
         
-        # For multiple flights, return first airline + "via others"
         main_airline = flights[0].get('airline', 'Unknown')
         return f"{main_airline} + others"
