@@ -96,3 +96,56 @@ class FlightSearchForm(forms.Form):
             'max': '9'
         })
     )
+
+
+class HotelSearchForm(forms.Form):
+    '''Form for searching hotels using SerpAPI'''
+    
+    city = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'e.g., Paris, Tokyo, New York',
+            'class': 'form-control'
+        }),
+        help_text='Enter city or destination'
+    )
+    
+    check_in_date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control'
+        }),
+        help_text='Check-in date'
+    )
+    
+    check_out_date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control'
+        }),
+        help_text='Check-out date'
+    )
+    
+    adults = forms.IntegerField(
+        initial=2,
+        min_value=1,
+        max_value=10,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'min': '1',
+            'max': '10'
+        }),
+        help_text='Number of adults'
+    )
+    
+    children = forms.IntegerField(
+        initial=0,
+        min_value=0,
+        max_value=8,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'min': '0',
+            'max': '8'
+        }),
+        help_text='Number of children'
+    )

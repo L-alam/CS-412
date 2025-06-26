@@ -11,7 +11,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib import messages
 from .flight_service import FlightSearchService
-from .forms import FlightSearchForm
+from .hotel_service import HotelSearchService
 import json
 
 # Create your views here.
@@ -86,6 +86,7 @@ class ShowTripDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         context['is_organizer'] = self.object.members.filter(user=self.request.user, role='organizer').exists()
         context['flight_search_form'] = FlightSearchForm()
+        context['hotel_search_form'] = HotelSearchForm()  # Add this line
         return context
 
 
@@ -501,6 +502,95 @@ class FlightSearchView(View):
             return JsonResponse({'error': str(e)}, status=400)
         except Exception as e:
             return JsonResponse({'error': f'Flight search failed: {str(e)}'}, status=500)
+
+
+
+class HotelSearchView(View):
+    '''AJAX view for searching hotels within a trip'''
+    
+    def post(self, request, *args, **kwargs):
+        '''Handle hotel search requests'''
+        trip_pk = kwargs.get('trip_pk')
+        trip = get_object_or_404(Trip, pk=trip_pk)
+        
+        # Check if user has permission to view this trip
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+            
+        if not trip.is_member(request.user):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+        
+        # Parse JSON data from request
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        
+        # Validate required fields
+        required_fields = ['city', 'check_in_date', 'check_out_date']
+        for field in required_fields:
+            if not data.get(field):
+                return JsonResponse({'error': f'Missing required field: {field}'}, status=400)
+        
+        # Validate dates
+        try:
+            from datetime import datetime
+            check_in = datetime.strptime(data['check_in_date'], '%Y-%m-%d')
+            check_out = datetime.strptime(data['check_out_date'], '%Y-%m-%d')
+            
+            if check_out <= check_in:
+                return JsonResponse({'error': 'Check-out date must be after check-in date'}, status=400)
+                
+        except ValueError:
+            return JsonResponse({'error': 'Invalid date format'}, status=400)
+        
+        try:
+            # Initialize hotel search service
+            hotel_service = HotelSearchService()
+            
+            # Search for hotels
+            api_response = hotel_service.search_hotels(
+                city=data['city'],
+                check_in_date=data['check_in_date'],
+                check_out_date=data['check_out_date'],
+                adults=data.get('adults', 2),
+                children=data.get('children', 0),
+                page_token=data.get('page_token')
+            )
+            
+            # Format results for frontend
+            formatted_hotels = hotel_service.format_hotel_results(api_response)
+            
+            # Get pagination info
+            pagination = api_response.get('serpapi_pagination', {})
+            
+            # Calculate nights for total price display
+            nights = hotel_service._calculate_nights(data['check_in_date'], data['check_out_date'])
+            
+            response_data = {
+                'hotels': formatted_hotels,
+                'nights': nights,
+                'pagination': {
+                    'current_from': pagination.get('current_from', 1),
+                    'current_to': pagination.get('current_to', len(formatted_hotels)),
+                    'next_page_token': pagination.get('next_page_token'),
+                    'has_next': bool(pagination.get('next_page_token'))
+                },
+                'search_params': {
+                    'city': data['city'],
+                    'check_in_date': data['check_in_date'],
+                    'check_out_date': data['check_out_date'],
+                    'adults': data.get('adults', 2),
+                    'children': data.get('children', 0)
+                }
+            }
+            
+            return JsonResponse(response_data)
+            
+        except ValueError as e:
+            return JsonResponse({'error': str(e)}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': f'Hotel search failed: {str(e)}'}, status=500)
 
 
 
