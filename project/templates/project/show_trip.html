@@ -14,35 +14,6 @@
     <p>{{ trip.description }}</p>
 </div>
 
-<!-- Trip Members Section -->
-<div class="members-section">
-    <div class="members-header">
-        <div class="members-display">
-            <span class="members-label">Trip Members:</span>
-            <div class="members-list">
-                {% for member in trip.get_members %}
-                <div class="member-tag">
-                    {% if member.user.trip_profile.first %}
-                        {{ member.user.trip_profile.first.first_name }} {{ member.user.trip_profile.first.last_name }}
-                    {% else %}
-                        {{ member.user.username }}
-                    {% endif %}
-                    {% if is_organizer and member.user != request.user %}
-                        <form method="POST" action="{% url 'remove_trip_member' trip.pk member.user.pk %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="remove-member-x" onclick="return confirm('Remove {{ member.user.username }} from this trip?')">×</button>
-                        </form>
-                    {% endif %}
-                </div>
-                {% empty %}
-                <div class="member-tag empty">No members yet</div>
-                {% endfor %}
-            </div>
-        </div>
-        <a href="{% url 'invite_friends' trip.pk %}" class="btn btn-primary">+ Add Friends</a>
-    </div>
-</div>
-
 <!-- Plans Section -->
 <div class="plans-section">
     <h2>Plans</h2>
@@ -61,14 +32,18 @@
 </div>
 
 <!-- Destination Section -->
-<div class="destinations-section">
-    <h2>Destinations</h2>
-    <div class="plans-buttons">
-        {% for plan in trip.get_plans %}
-            {% for destination in plan.get_destinations %}
-                <p>{{ destination.city }}, {{ destination.country }}</p>
-            {% endfor %}
-        {% endfor %}
+<div class="destination-card">
+    <div class="destination-header">
+        <h4>{{ destination.city }}</h4>
+        <span class="country">{{ destination.country }}</span>
+    </div>
+    <div class="destination-details">
+        {% if destination.nights_staying %}
+            <span class="detail">{{ destination.nights_staying }} nights</span>
+        {% endif %}
+        {% if destination.estimated_cost %}
+            <span class="detail cost">${{ destination.estimated_cost }}</span>
+        {% endif %}
     </div>
 </div>
 
@@ -84,51 +59,67 @@
     <!-- Flights Tab Content -->
     <div class="tab-content active" id="flights-tab">
         <div class="tab-header">
-            <h3>Flight Options</h3>
-            <button class="add-btn">+ Add Flight</button>
+            <h3>Flight Search</h3>
         </div>
-        <div class="content-list">
-            <div class="list-item flight-item">
-                <div class="item-main">
-                    <div class="flight-route">
-                        <span class="airport">JFK</span>
-                        <span class="arrow">→</span>
-                        <span class="airport">CDG</span>
+        
+        <!-- Flight Search Form -->
+        <div class="flight-search-container">
+            <form id="flight-search-form" class="flight-search-form">
+                {% csrf_token %}
+                <div class="search-row">
+                    <div class="search-field">
+                        <label for="{{ flight_search_form.departure_city.id_for_label }}">From:</label>
+                        {{ flight_search_form.departure_city }}
                     </div>
-                    <div class="flight-details">
-                        <span class="airline">Air France 123</span>
-                        <span class="duration">7h 30m</span>
+                    <div class="search-field">
+                        <label for="{{ flight_search_form.arrival_city.id_for_label }}">To:</label>
+                        {{ flight_search_form.arrival_city }}
+                    </div>
+                    <div class="search-field">
+                        <label for="{{ flight_search_form.departure_date.id_for_label }}">Departure:</label>
+                        {{ flight_search_form.departure_date }}
+                    </div>
+                    <div class="search-field">
+                        <label for="{{ flight_search_form.return_date.id_for_label }}">Return (Optional):</label>
+                        {{ flight_search_form.return_date }}
                     </div>
                 </div>
-                <div class="item-price">$650</div>
-                <div class="item-actions">
-                    <button class="btn-select">Select</button>
+                
+                <div class="search-row">
+                    <div class="search-field">
+                        <label for="{{ flight_search_form.travel_class.id_for_label }}">Class:</label>
+                        {{ flight_search_form.travel_class }}
+                    </div>
+                    <div class="search-field">
+                        <label for="{{ flight_search_form.adults.id_for_label }}">Adults:</label>
+                        {{ flight_search_form.adults }}
+                    </div>
+                    <div class="search-field search-button">
+                        <button type="submit" class="btn btn-primary">Search Flights</button>
+                    </div>
                 </div>
+            </form>
+        </div>
+        
+        <!-- Loading indicator -->
+        <div id="flight-loading" class="loading-indicator" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Searching for flights...</p>
+        </div>
+        
+        <!-- Flight Results -->
+        <div id="flight-results" class="flight-results" style="display: none;">
+            <div class="results-header">
+                <h4>Flight Results</h4>
+                <div class="results-count"></div>
             </div>
-            
-            <div class="list-item flight-item">
-                <div class="item-main">
-                    <div class="flight-route">
-                        <span class="airport">JFK</span>
-                        <span class="arrow">→</span>
-                        <span class="airport">LHR</span>
-                    </div>
-                    <div class="flight-details">
-                        <span class="airline">British Airways 215</span>
-                        <span class="duration">6h 45m</span>
-                    </div>
-                </div>
-                <div class="item-price">$720</div>
-                <div class="item-actions">
-                    <button class="btn-select">Select</button>
-                </div>
-            </div>
+            <div class="flight-list"></div>
             
             <!-- Pagination -->
-            <div class="pagination">
-                <button class="page-btn" disabled>← Previous</button>
-                <span class="page-info">Page 1 of 3</span>
-                <button class="page-btn">Next →</button>
+            <div class="flight-pagination" style="display: none;">
+                <button id="prev-flights" class="page-btn" disabled>← Previous</button>
+                <span class="page-info"></span>
+                <button id="next-flights" class="page-btn">Next →</button>
             </div>
         </div>
     </div>
@@ -265,7 +256,191 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Custom list functionality
+// Flight Search Functionality
+let currentSearchParams = {};
+let nextPageToken = null;
+
+document.getElementById('flight-search-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    searchFlights();
+});
+
+function searchFlights(pageToken = null) {
+    const form = document.getElementById('flight-search-form');
+    const formData = new FormData(form);
+    
+    // Build search parameters
+    const searchParams = {
+        departure_city: formData.get('departure_city'),
+        arrival_city: formData.get('arrival_city'),
+        departure_date: formData.get('departure_date'),
+        return_date: formData.get('return_date'),
+        travel_class: formData.get('travel_class'),
+        adults: formData.get('adults'),
+    };
+    
+    // Add page token if provided
+    if (pageToken) {
+        searchParams.page_token = pageToken;
+    }
+    
+    // Store current search params
+    currentSearchParams = searchParams;
+    
+    // Show loading
+    document.getElementById('flight-loading').style.display = 'block';
+    document.getElementById('flight-results').style.display = 'none';
+    
+    // Make AJAX request
+    fetch(`{% url 'search_flights' trip.pk %}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: JSON.stringify(searchParams)
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('flight-loading').style.display = 'none';
+        
+        if (data.error) {
+            alert('Error: ' + data.error);
+            return;
+        }
+        
+        displayFlightResults(data);
+    })
+    .catch(error => {
+        document.getElementById('flight-loading').style.display = 'none';
+        alert('Error searching for flights: ' + error.message);
+    });
+}
+
+function displayFlightResults(data) {
+    const resultsContainer = document.getElementById('flight-results');
+    const flightList = resultsContainer.querySelector('.flight-list');
+    const resultsCount = resultsContainer.querySelector('.results-count');
+    
+    // Clear previous results
+    flightList.innerHTML = '';
+    
+    // Update results count
+    resultsCount.textContent = `Found ${data.flights.length} flights`;
+    
+    // Display flights
+    data.flights.forEach(flight => {
+        const flightCard = createFlightCard(flight);
+        flightList.appendChild(flightCard);
+    });
+    
+    // Update pagination
+    updateFlightPagination(data.pagination);
+    
+    // Show results
+    resultsContainer.style.display = 'block';
+}
+
+function createFlightCard(flight) {
+    const card = document.createElement('div');
+    card.className = 'flight-card';
+    
+    const stopsText = flight.stops === 0 ? 'Nonstop' : 
+                     flight.stops === 1 ? '1 stop' : `${flight.stops} stops`;
+    
+    card.innerHTML = `
+        <div class="flight-card-content">
+            <div class="flight-route">
+                <div class="airport-info">
+                    <div class="airport-code">${flight.departure_code}</div>
+                    <div class="airport-time">${formatTime(flight.departure_time)}</div>
+                </div>
+                <div class="flight-duration">
+                    <div class="duration-line">
+                        <span class="duration-text">${flight.duration_formatted}</span>
+                        <div class="route-line"></div>
+                    </div>
+                    <div class="stops-info">${stopsText}</div>
+                </div>
+                <div class="airport-info">
+                    <div class="airport-code">${flight.arrival_code}</div>
+                    <div class="airport-time">${formatTime(flight.arrival_time)}</div>
+                </div>
+            </div>
+            
+            <div class="flight-details">
+                <div class="airline-info">
+                    <img src="${flight.airline_logo}" alt="${flight.airline}" class="airline-logo" onerror="this.style.display='none'">
+                    <span class="airline-name">${flight.airline}</span>
+                </div>
+                <div class="flight-price">
+                    <span class="price">${flight.price}</span>
+                    <span class="price-label">per person</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flight-actions">
+            <button class="add-to-list-btn" onclick="addFlightToList('${flight.booking_token}')">
+                + Add to List
+            </button>
+        </div>
+    `;
+    
+    return card;
+}
+
+function formatTime(timeString) {
+    if (!timeString) return 'N/A';
+    
+    // Extract time from datetime string (assuming format like "2025-06-27 15:30")
+    const timePart = timeString.split(' ')[1];
+    if (!timePart) return timeString;
+    
+    const [hours, minutes] = timePart.split(':');
+    const hour24 = parseInt(hours);
+    const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+    const ampm = hour24 >= 12 ? 'PM' : 'AM';
+    
+    return `${hour12}:${minutes} ${ampm}`;
+}
+
+function updateFlightPagination(pagination) {
+    const paginationContainer = document.querySelector('.flight-pagination');
+    const pageInfo = paginationContainer.querySelector('.page-info');
+    const prevBtn = document.getElementById('prev-flights');
+    const nextBtn = document.getElementById('next-flights');
+    
+    // Update page info
+    pageInfo.textContent = `Showing ${pagination.current_from}-${pagination.current_to}`;
+    
+    // Update pagination buttons
+    nextBtn.disabled = !pagination.has_next;
+    nextPageToken = pagination.next_page_token;
+    
+    // Show pagination if there are multiple pages
+    if (pagination.has_next || pagination.current_from > 1) {
+        paginationContainer.style.display = 'flex';
+    } else {
+        paginationContainer.style.display = 'none';
+    }
+}
+
+// Pagination event listeners
+document.getElementById('next-flights').addEventListener('click', function() {
+    if (nextPageToken) {
+        searchFlights(nextPageToken);
+    }
+});
+
+function addFlightToList(bookingToken) {
+    // Placeholder for adding flight to trip list
+    // This will be implemented later
+    console.log('Adding flight to list:', bookingToken);
+    alert('Flight added to list! (Feature will be implemented later)');
+}
+
+// Custom list functionality (existing code)
 function showAddItemForm() {
     document.getElementById('add-item-form').style.display = 'block';
 }
@@ -305,6 +480,8 @@ function addCustomItem() {
     contentList.insertBefore(newItem, pagination);
     hideAddItemForm();
 }
+
+
 </script>
 {% endif %}
 
@@ -322,7 +499,6 @@ function addCustomItem() {
     margin-bottom: 15px;
     color: #333;
 }
-
 
 .plans-section {
     margin-bottom: 30px;
@@ -372,6 +548,256 @@ function addCustomItem() {
 .new-plan-btn:hover {
     background: #449d44;
     border-color: #449d44;
+}
+
+/* Flight Search Styles */
+.flight-search-container {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.flight-search-form {
+    max-width: none;
+}
+
+.search-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    align-items: end;
+}
+
+.search-field {
+    flex: 1;
+    min-width: 150px;
+}
+
+.search-field.search-button {
+    flex: 0 0 auto;
+}
+
+.search-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.search-field input,
+.search-field select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.search-field input:focus,
+.search-field select:focus {
+    outline: none;
+    border-color: #3b5998;
+    box-shadow: 0 0 0 2px rgba(59, 89, 152, 0.1);
+}
+
+/* Loading Indicator */
+.loading-indicator {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3b5998;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Flight Results */
+.flight-results {
+    margin-top: 20px;
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.results-header h4 {
+    margin: 0;
+    color: #333;
+}
+
+.results-count {
+    color: #666;
+    font-size: 14px;
+}
+
+.flight-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.flight-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    transition: box-shadow 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.flight-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+.flight-card-content {
+    flex: 1;
+}
+
+.flight-route {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.airport-info {
+    text-align: center;
+    min-width: 80px;
+}
+
+.airport-code {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.airport-time {
+    font-size: 13px;
+    color: #666;
+}
+
+.flight-duration {
+    flex: 1;
+    text-align: center;
+    padding: 0 20px;
+}
+
+.duration-line {
+    position: relative;
+    margin-bottom: 5px;
+}
+
+.duration-text {
+    background: white;
+    padding: 0 10px;
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
+}
+
+.route-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #ddd;
+    z-index: -1;
+}
+
+.stops-info {
+    font-size: 12px;
+    color: #999;
+}
+
+.flight-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.airline-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.airline-logo {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.airline-name {
+    font-size: 14px;
+    color: #666;
+}
+
+.flight-price {
+    text-align: right;
+}
+
+.price {
+    font-size: 20px;
+    font-weight: bold;
+    color: #3b5998;
+}
+
+.price-label {
+    display: block;
+    font-size: 12px;
+    color: #999;
+}
+
+.flight-actions {
+    margin-left: 20px;
+}
+
+.add-to-list-btn {
+    background: #5cb85c;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.add-to-list-btn:hover {
+    background: #449d44;
+}
+
+.flight-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
 }
 
 /* Tabbed Section Styles */
@@ -474,32 +900,6 @@ function addCustomItem() {
 
 .item-main {
     flex: 1;
-}
-
-/* Flight-specific styles */
-.flight-route {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 5px;
-}
-
-.airport {
-    font-weight: bold;
-    font-size: 16px;
-    color: #333;
-}
-
-.arrow {
-    color: #666;
-    font-size: 14px;
-}
-
-.flight-details {
-    display: flex;
-    gap: 15px;
-    font-size: 14px;
-    color: #666;
 }
 
 /* Housing-specific styles */
@@ -686,6 +1086,15 @@ function addCustomItem() {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .search-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .search-field {
+        min-width: auto;
+    }
+    
     .tab-navigation {
         flex-direction: column;
     }
@@ -698,6 +1107,30 @@ function addCustomItem() {
         flex-direction: column;
         gap: 15px;
         text-align: center;
+    }
+    
+    .flight-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .flight-route {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .flight-duration {
+        padding: 10px 0;
+    }
+    
+    .flight-actions {
+        margin-left: 0;
+        align-self: stretch;
+    }
+    
+    .add-to-list-btn {
+        width: 100%;
     }
     
     .list-item {
@@ -716,104 +1149,5 @@ function addCustomItem() {
         align-self: flex-end;
     }
 }
-
-.members-section {
-    margin-bottom: 30px;
-    padding: 15px 20px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.members-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 15px;
-}
-
-.members-display {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.members-label {
-    font-weight: bold;
-    color: #333;
-    font-size: 16px;
-    white-space: nowrap;
-}
-
-.members-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.member-tag {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 20px;
-    padding: 6px 12px;
-    font-size: 14px;
-    color: #333;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    position: relative;
-}
-
-.member-tag.empty {
-    color: #666;
-    font-style: italic;
-}
-
-.organizer-icon {
-    color: #ffc107;
-    font-size: 12px;
-    margin-left: 2px;
-}
-
-.remove-member-x {
-    background: none;
-    border: none;
-    color: #dc3545;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-    padding: 0;
-    margin-left: 5px;
-    width: 16px;
-    height: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: background-color 0.3s;
-}
-
-.remove-member-x:hover {
-    background: #dc3545;
-    color: white;
-}
-
-@media (max-width: 768px) {
-    .members-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .members-display {
-        width: 100%;
-    }
-    
-    .members-list {
-        margin-top: 5px;
-    }
-}
-
 </style>
 {% endblock %}

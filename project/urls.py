@@ -24,6 +24,9 @@ urlpatterns = [
     path('trip/<int:trip_pk>/add_member/<int:user_pk>/', AddTripMemberView.as_view(), name='add_trip_member'),
     path('trip/<int:trip_pk>/remove_member/<int:user_pk>/', RemoveTripMemberView.as_view(), name='remove_trip_member'),
     
+    # Flight search
+    path('trip/<int:trip_pk>/search_flights/', FlightSearchView.as_view(), name='search_flights'),
+    
     # Authentication
     path('login/', auth_views.LoginView.as_view(template_name='project/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='logout_confirmation'), name='logout'),

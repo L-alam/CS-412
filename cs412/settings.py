@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from django.core.exceptions import ImproperlyConfigured
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -144,6 +146,23 @@ STATICFILES_DIRS = [
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 MEDIA_URL = "/media/"
+
+# SerpAPI Configuration - Development Friendly
+SERPAPI_KEY = os.environ.get('SERPAPI_KEY')
+
+# For development, you can uncomment and add your key here when you get one:
+SERPAPI_KEY = '18c9983d71b3567e59826e4e6fc20721a6a61ceb5b4c17c5eec11dbaf9916b26'
+
+# Allow running without API key for development/testing
+if not SERPAPI_KEY:
+    SERPAPI_KEY = None
+    print("Warning: SERPAPI_KEY not set. Flight search will use mock data.")
+
+# Optional: Add rate limiting configuration
+SERPAPI_RATE_LIMIT = {
+    'calls_per_month': 100,
+    'calls_per_minute': 5,
+}
 
 import socket
 CS_DEPLOYMENT_HOSTNAME = 'cs-webapps.bu.edu'

@@ -9,6 +9,10 @@ from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.http import JsonResponse
+from django.contrib import messages
+from .flight_service import FlightSearchService
+from .forms import FlightSearchForm
+import json
 
 # Create your views here.
 
@@ -81,6 +85,7 @@ class ShowTripDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['is_organizer'] = self.object.members.filter(user=self.request.user, role='organizer').exists()
+        context['flight_search_form'] = FlightSearchForm()
         return context
 
 
@@ -422,6 +427,73 @@ class RemoveTripMemberView(View):
         
         return redirect('show_trip', pk=trip.pk)
 
+
+
+class FlightSearchView(View):
+    '''AJAX view for searching flights within a trip'''
+    
+    def post(self, request, *args, **kwargs):
+        '''Handle flight search requests'''
+        trip_pk = kwargs.get('trip_pk')
+        trip = get_object_or_404(Trip, pk=trip_pk)
+        
+        # Parse JSON data from request
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        
+        # Validate required fields
+        required_fields = ['departure_city', 'arrival_city', 'departure_date']
+        for field in required_fields:
+            if not data.get(field):
+                return JsonResponse({'error': f'Missing required field: {field}'}, status=400)
+        
+        try:
+            # Initialize flight search service
+            flight_service = FlightSearchService()
+            
+            # Search for flights
+            api_response = flight_service.search_flights(
+                departure_city=data['departure_city'],
+                arrival_city=data['arrival_city'],
+                departure_date=data['departure_date'],
+                return_date=data.get('return_date'),
+                travel_class=data.get('travel_class', '1'),
+                adults=data.get('adults', 1),
+                page_token=data.get('page_token')
+            )
+            
+            # Format results for frontend
+            formatted_flights = flight_service.format_flight_results(api_response)
+            
+            # Get pagination info
+            pagination = api_response.get('serpapi_pagination', {})
+            
+            response_data = {
+                'flights': formatted_flights,
+                'pagination': {
+                    'current_from': pagination.get('current_from', 1),
+                    'current_to': pagination.get('current_to', len(formatted_flights)),
+                    'next_page_token': pagination.get('next_page_token'),
+                    'has_next': bool(pagination.get('next_page_token'))
+                },
+                'search_params': {
+                    'departure_city': data['departure_city'],
+                    'arrival_city': data['arrival_city'],
+                    'departure_date': data['departure_date'],
+                    'return_date': data.get('return_date'),
+                    'travel_class': data.get('travel_class', '1'),
+                    'adults': data.get('adults', 1)
+                }
+            }
+            
+            return JsonResponse(response_data)
+            
+        except ValueError as e:
+            return JsonResponse({'error': str(e)}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': f'Flight search failed: {str(e)}'}, status=500)
 
 
 
