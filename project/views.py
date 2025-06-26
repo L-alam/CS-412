@@ -593,6 +593,232 @@ class HotelSearchView(View):
             return JsonResponse({'error': f'Hotel search failed: {str(e)}'}, status=500)
 
 
+class AddFlightToListView(View):
+    '''Add a flight to the trip's list'''
+    
+    def post(self, request, *args, **kwargs):
+        trip_pk = kwargs.get('trip_pk')
+        trip = get_object_or_404(Trip, pk=trip_pk)
+        
+        # Check permissions
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+            
+        if not trip.is_member(request.user):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+        
+        try:
+            data = json.loads(request.body)
+            
+            # Validate required fields
+            required_fields = ['title', 'departure_code', 'arrival_code', 'departure_time', 'arrival_time', 'duration_formatted', 'airline', 'price']
+            for field in required_fields:
+                if field not in data:
+                    return JsonResponse({'error': f'Missing required field: {field}'}, status=400)
+            
+            # Create the list item
+            list_item = TripListItem.objects.create(
+                trip=trip,
+                added_by=request.user,
+                item_type='flight',
+                title=f"{data['departure_code']} → {data['arrival_code']}",
+                description=f"{data['airline']} • {data['duration_formatted']} • {data.get('stops_text', 'Direct')}",
+                price=data['price'],
+                item_data={
+                    'departure_code': data['departure_code'],
+                    'arrival_code': data['arrival_code'],
+                    'departure_time': data['departure_time'],
+                    'arrival_time': data['arrival_time'],
+                    'duration_formatted': data['duration_formatted'],
+                    'airline': data['airline'],
+                    'stops': data.get('stops', 0),
+                    'booking_token': data.get('booking_token', ''),
+                }
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Flight added to list!',
+                'item_id': list_item.id
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
+class AddHotelToListView(View):
+    '''Add a hotel to the trip's list'''
+    
+    def post(self, request, *args, **kwargs):
+        trip_pk = kwargs.get('trip_pk')
+        trip = get_object_or_404(Trip, pk=trip_pk)
+        
+        # Check permissions
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+            
+        if not trip.is_member(request.user):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+        
+        try:
+            data = json.loads(request.body)
+            
+            # Validate required fields
+            required_fields = ['name', 'rating', 'price_per_night', 'total_price']
+            for field in required_fields:
+                if field not in data:
+                    return JsonResponse({'error': f'Missing required field: {field}'}, status=400)
+            
+            # Create description with rating and amenities
+            amenities_text = ', '.join(data.get('amenities', [])[:3])
+            if len(data.get('amenities', [])) > 3:
+                amenities_text += f" +{len(data['amenities']) - 3} more"
+            
+            description = f"★ {data['rating']} • {data.get('star_rating', 'N/A')} stars"
+            if amenities_text:
+                description += f" • {amenities_text}"
+            
+            # Create the list item
+            list_item = TripListItem.objects.create(
+                trip=trip,
+                added_by=request.user,
+                item_type='hotel',
+                title=data['name'],
+                description=description,
+                price=data.get('total_price_value', data.get('price_per_night_value', 0)),
+                item_data={
+                    'name': data['name'],
+                    'rating': data['rating'],
+                    'star_rating': data.get('star_rating', 0),
+                    'price_per_night': data['price_per_night'],
+                    'price_per_night_value': data.get('price_per_night_value', 0),
+                    'total_price': data['total_price'],
+                    'total_price_value': data.get('total_price_value', 0),
+                    'amenities': data.get('amenities', []),
+                    'property_token': data.get('property_token', ''),
+                    'reviews': data.get('reviews', 0),
+                }
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Hotel added to list!',
+                'item_id': list_item.id
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
+class AddCustomItemToListView(View):
+    '''Add a custom item to the trip's list'''
+    
+    def post(self, request, *args, **kwargs):
+        trip_pk = kwargs.get('trip_pk')
+        trip = get_object_or_404(Trip, pk=trip_pk)
+        
+        # Check permissions
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+            
+        if not trip.is_member(request.user):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+        
+        try:
+            data = json.loads(request.body)
+            
+            title = data.get('title', '').strip()
+            description = data.get('description', '').strip()
+            
+            if not title:
+                return JsonResponse({'error': 'Title is required'}, status=400)
+            
+            # Create the list item
+            list_item = TripListItem.objects.create(
+                trip=trip,
+                added_by=request.user,
+                item_type='custom',
+                title=title,
+                description=description,
+                item_data={
+                    'custom_title': title,
+                    'custom_description': description,
+                }
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Item added to list!',
+                'item_id': list_item.id,
+                'item_html': self._render_list_item(list_item)
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    def _render_list_item(self, item):
+        '''Render HTML for a list item'''
+        price_display = f"${item.price}" if item.price else ""
+        
+        if item.item_type == 'flight':
+            icon = "✈️"
+        elif item.item_type == 'hotel':
+            icon = "🏨"
+        else:
+            icon = "📝"
+        
+        return f'''
+        <div class="list-item saved-item" data-item-id="{item.id}">
+            <div class="item-main">
+                <div class="item-title">{icon} {item.title}</div>
+                <div class="item-description">{item.description}</div>
+                <small class="added-info">Added by {item.added_by.username} on {item.added_date.strftime('%b %d, %Y')}</small>
+            </div>
+            {f'<div class="item-price">{price_display}</div>' if price_display else ''}
+            <div class="item-actions">
+                <button class="btn-delete" onclick="removeListItem({item.id})">Delete</button>
+            </div>
+        </div>
+        '''
+
+
+class RemoveListItemView(View):
+    '''Remove an item from the trip's list'''
+    
+    def post(self, request, *args, **kwargs):
+        trip_pk = kwargs.get('trip_pk')
+        item_id = kwargs.get('item_id')
+        
+        trip = get_object_or_404(Trip, pk=trip_pk)
+        list_item = get_object_or_404(TripListItem, id=item_id, trip=trip)
+        
+        # Check permissions
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+            
+        if not trip.is_member(request.user):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+        
+        # Allow item creator or trip organizers to delete
+        if list_item.added_by != request.user and not trip.is_organizer(request.user):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+        
+        try:
+            list_item.delete()
+            return JsonResponse({
+                'success': True,
+                'message': 'Item removed from list!'
+            })
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
 
 # {% extends 'project/base.html' %}
 
