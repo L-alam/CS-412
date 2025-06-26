@@ -88,6 +88,9 @@ class ShowTripDetailView(DetailView):
         context['flight_search_form'] = FlightSearchForm()
         context['hotel_search_form'] = HotelSearchForm()
         
+        # Add STATUS_CHOICES to context for the template
+        context['STATUS_CHOICES'] = Trip.STATUS_CHOICES
+        
         # Add plan-specific list items to context
         plans_with_items = []
         for plan in self.object.get_plans():
@@ -918,6 +921,188 @@ class GetPlanListItemsView(View):
             
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
+        
+
+class ChangeTripsStatusView(View):
+    '''Change the status of a trip'''
+    
+    def post(self, request, *args, **kwargs):
+        trip_pk = kwargs.get('trip_pk')
+        trip = get_object_or_404(Trip, pk=trip_pk)
+        
+        # Check permissions - only organizers can change status
+        if not request.user.is_authenticated:
+            return redirect('login')
+            
+        if not trip.is_organizer(request.user):
+            messages.error(request, "Only organizers can change trip status.")
+            return redirect('show_trip', pk=trip.pk)
+        
+        new_status = request.POST.get('status')
+        if new_status not in [choice[0] for choice in Trip.STATUS_CHOICES]:
+            messages.error(request, "Invalid status selected.")
+            return redirect('show_trip', pk=trip.pk)
+        
+        trip.status = new_status
+        trip.save()
+        
+        messages.success(request, f"Trip status changed to {trip.get_status_display()}.")
+        return redirect('show_trip', pk=trip.pk)
+    
+
+class LeaveTripsView(View):
+    '''Remove yourself from a trip'''
+    
+    def post(self, request, *args, **kwargs):
+        trip_pk = kwargs.get('trip_pk')
+        trip = get_object_or_404(Trip, pk=trip_pk)
+        
+        if not request.user.is_authenticated:
+            return redirect('login')
+            
+        if not trip.is_member(request.user):
+            messages.error(request, "You are not a member of this trip.")
+            return redirect('show_all')
+        
+        # Check if user is the last organizer
+        if trip.is_organizer(request.user) and trip.get_organizers().count() == 1:
+            messages.error(request, "You cannot leave the trip as you are the only organizer. Please make someone else an organizer first or delete the trip.")
+            return redirect('show_trip', pk=trip.pk)
+        
+        # Remove the user from the trip
+        trip_member = trip.members.filter(user=request.user).first()
+        if trip_member:
+            trip_member.delete()
+            messages.success(request, f"You have left the trip '{trip.name}'.")
+        
+        return redirect('show_all')
+    
+
+class DeleteTripsView(View):
+    '''Delete a trip completely'''
+    
+    def get(self, request, *args, **kwargs):
+        '''Show confirmation page'''
+        trip_pk = kwargs.get('trip_pk')
+        trip = get_object_or_404(Trip, pk=trip_pk)
+        
+        if not request.user.is_authenticated:
+            return redirect('login')
+            
+        if not trip.is_organizer(request.user):
+            messages.error(request, "Only organizers can delete trips.")
+            return redirect('show_trip', pk=trip.pk)
+        
+        return render(request, 'project/delete_trip_confirm.html', {'trip': trip})
+    
+    def post(self, request, *args, **kwargs):
+        '''Actually delete the trip'''
+        trip_pk = kwargs.get('trip_pk')
+        trip = get_object_or_404(Trip, pk=trip_pk)
+        
+        if not request.user.is_authenticated:
+            return redirect('login')
+            
+        if not trip.is_organizer(request.user):
+            messages.error(request, "Only organizers can delete trips.")
+            return redirect('show_trip', pk=trip.pk)
+        
+        trip_name = trip.name
+        trip.delete()
+        
+        messages.success(request, f"Trip '{trip_name}' has been deleted.")
+        return redirect('show_all')
+
+
+class RemoveFriendFromTripsView(View):
+    '''Remove a friend from a trip (similar to RemoveTripMemberView but with friend context)'''
+    
+    def post(self, request, *args, **kwargs):
+        trip_pk = kwargs.get('trip_pk')
+        friend_pk = kwargs.get('friend_pk')
+        
+        trip = get_object_or_404(Trip, pk=trip_pk)
+        friend_profile = get_object_or_404(Profile, pk=friend_pk)
+        
+        if not request.user.is_authenticated:
+            return redirect('login')
+            
+        if not trip.is_organizer(request.user):
+            messages.error(request, "Only organizers can remove members from trips.")
+            return redirect('show_trip', pk=trip.pk)
+        
+        # Don't allow removing the last organizer
+        if trip.get_organizers().count() == 1:
+            organizer = trip.get_organizers().first()
+            if organizer.user == friend_profile.user:
+                messages.error(request, "Cannot remove the last organizer from the trip.")
+                return redirect('show_trip', pk=trip.pk)
+        
+        # Remove the member
+        trip_member = trip.members.filter(user=friend_profile.user).first()
+        if trip_member:
+            trip_member.delete()
+            messages.success(request, f"Removed {friend_profile.first_name} {friend_profile.last_name} from the trip.")
+        else:
+            messages.info(request, f"{friend_profile.first_name} {friend_profile.last_name} is not a member of this trip.")
+        
+        return redirect('show_trip', pk=trip.pk)
+
+
+class DeletePlanView(View):
+    '''Delete a plan from a trip'''
+    
+    def get(self, request, *args, **kwargs):
+        '''Show confirmation page'''
+        trip_pk = kwargs.get('trip_pk')
+        plan_pk = kwargs.get('plan_pk')
+        
+        trip = get_object_or_404(Trip, pk=trip_pk)
+        plan = get_object_or_404(Plan, pk=plan_pk, trip=trip)
+        
+        if not request.user.is_authenticated:
+            return redirect('login')
+            
+        if not trip.is_member(request.user):
+            messages.error(request, "You don't have permission to delete plans from this trip.")
+            return redirect('show_trip', pk=trip.pk)
+        
+        # Only plan creator or organizers can delete plans
+        if plan.created_by != request.user and not trip.is_organizer(request.user):
+            messages.error(request, "You can only delete plans you created, or you must be an organizer.")
+            return redirect('show_trip', pk=trip.pk)
+        
+        return render(request, 'project/delete_plan_confirm.html', {
+            'trip': trip,
+            'plan': plan
+        })
+    
+    def post(self, request, *args, **kwargs):
+        '''Actually delete the plan'''
+        trip_pk = kwargs.get('trip_pk')
+        plan_pk = kwargs.get('plan_pk')
+        
+        trip = get_object_or_404(Trip, pk=trip_pk)
+        plan = get_object_or_404(Plan, pk=plan_pk, trip=trip)
+        
+        if not request.user.is_authenticated:
+            return redirect('login')
+            
+        if not trip.is_member(request.user):
+            messages.error(request, "You don't have permission to delete plans from this trip.")
+            return redirect('show_trip', pk=trip.pk)
+        
+        # Only plan creator or organizers can delete plans
+        if plan.created_by != request.user and not trip.is_organizer(request.user):
+            messages.error(request, "You can only delete plans you created, or you must be an organizer.")
+            return redirect('show_trip', pk=trip.pk)
+        
+        plan_name = plan.name
+        plan.delete()
+        
+        messages.success(request, f"Plan '{plan_name}' has been deleted.")
+        return redirect('show_trip', pk=trip.pk)
+    
 
 
 # {% extends 'project/base.html' %}

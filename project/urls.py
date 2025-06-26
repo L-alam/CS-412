@@ -24,6 +24,15 @@ urlpatterns = [
     path('trip/<int:trip_pk>/add_member/<int:user_pk>/', AddTripMemberView.as_view(), name='add_trip_member'),
     path('trip/<int:trip_pk>/remove_member/<int:user_pk>/', RemoveTripMemberView.as_view(), name='remove_trip_member'),
     
+    # Trip management
+    path('trip/<int:trip_pk>/change_status/', ChangeTripsStatusView.as_view(), name='change_trip_status'),
+    path('trip/<int:trip_pk>/leave/', LeaveTripsView.as_view(), name='leave_trip'),
+    path('trip/<int:trip_pk>/delete/', DeleteTripsView.as_view(), name='delete_trip'),
+    path('trip/<int:trip_pk>/remove_friend/<int:friend_pk>/', RemoveFriendFromTripsView.as_view(), name='remove_friend_from_trip'),
+    
+    # Plan management
+    path('trip/<int:trip_pk>/plan/<int:plan_pk>/delete/', DeletePlanView.as_view(), name='delete_plan'),
+    
     # Search Flight + Hotel
     path('trip/<int:trip_pk>/search_flights/', FlightSearchView.as_view(), name='search_flights'),
     path('trip/<int:trip_pk>/search_hotels/', HotelSearchView.as_view(), name='search_hotels'),
@@ -39,5 +48,6 @@ urlpatterns = [
     path('trip/<int:trip_pk>/add_custom_item/', AddCustomItemToListView.as_view(), name='add_custom_item'),
     path('trip/<int:trip_pk>/remove_list_item/<int:item_id>/', RemoveListItemView.as_view(), name='remove_list_item'),
     
+    #Item List View
     path('trip/<int:trip_pk>/plan/<int:plan_pk>/list_items/', GetPlanListItemsView.as_view(), name='get_plan_list_items'),
 ]

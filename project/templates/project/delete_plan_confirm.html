@@ -1,0 +1,237 @@
+<!-- project/templates/project/delete_plan_confirm.html -->
+{% extends 'project/base.html' %}
+
+{% block content %}
+<div class="delete-confirmation-container">
+    <div class="delete-warning-box">
+        <div class="warning-icon">🗑️</div>
+        
+        <h1>Delete Plan</h1>
+        <p class="warning-text">Are you sure you want to delete this plan?</p>
+        
+        <div class="plan-preview">
+            <h3>{{ plan.name }}</h3>
+            <p class="trip-context">From trip: <strong>{{ trip.name }}</strong></p>
+            
+            <div class="plan-details">
+                {% if plan.get_destinations %}
+                    <div class="destinations-info">
+                        <h4>Destinations:</h4>
+                        <ul>
+                            {% for destination in plan.get_destinations %}
+                                <li>{{ destination.city }}, {{ destination.country }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                
+                <div class="stats-info">
+                    <p><strong>List Items:</strong> {{ plan.get_list_items.count }}</p>
+                    <p><strong>Flight Items:</strong> {{ plan.get_flight_items.count }}</p>
+                    <p><strong>Hotel Items:</strong> {{ plan.get_hotel_items.count }}</p>
+                    <p><strong>Custom Items:</strong> {{ plan.get_custom_items.count }}</p>
+                </div>
+                
+                {% if plan.created_by %}
+                    <p class="created-info">Created by: {{ plan.created_by.username }}</p>
+                {% endif %}
+                {% if plan.created_date %}
+                    <p class="created-info">Created: {{ plan.created_date|date:"M j, Y" }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="warning-details">
+            <h4>This action will permanently delete:</h4>
+            <ul>
+                <li>All destinations in this plan</li>
+                <li>All saved flights and hotels in this plan</li>
+                <li>All list items in this plan</li>
+            </ul>
+            <p class="irreversible-warning">This action cannot be undone!</p>
+        </div>
+        
+        <div class="action-buttons">
+            <form method="POST" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="delete-btn">Yes, Delete Plan</button>
+            </form>
+            <a href="{% url 'show_trip' trip.pk %}" class="cancel-btn">Cancel</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.delete-confirmation-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+}
+
+.delete-warning-box {
+    background: white;
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    border: 2px solid #ffc107;
+}
+
+.warning-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+
+.delete-warning-box h1 {
+    color: #856404;
+    margin-bottom: 15px;
+    font-size: 28px;
+}
+
+.warning-text {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 30px;
+}
+
+.plan-preview {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.plan-preview h3 {
+    color: #3b5998;
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+
+.trip-context {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+
+.destinations-info {
+    margin-bottom: 20px;
+}
+
+.destinations-info h4 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.destinations-info ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.destinations-info li {
+    color: #555;
+    margin-bottom: 5px;
+}
+
+.stats-info p {
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.created-info {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.warning-details {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.warning-details h4 {
+    color: #856404;
+    margin-bottom: 15px;
+}
+
+.warning-details ul {
+    margin-bottom: 15px;
+    padding-left: 20px;
+}
+
+.warning-details li {
+    color: #856404;
+    margin-bottom: 5px;
+}
+
+.irreversible-warning {
+    color: #dc3545;
+    font-weight: bold;
+    font-size: 16px;
+    margin: 0;
+    text-align: center;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.delete-btn {
+    background: #ffc107;
+    color: #212529;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.delete-btn:hover {
+    background: #e0a800;
+}
+
+.cancel-btn {
+    background: #6c757d;
+    color: white;
+    padding: 12px 30px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.cancel-btn:hover {
+    background: #5a6268;
+}
+
+@media (max-width: 600px) {
+    .delete-confirmation-container {
+        margin: 20px;
+        padding: 10px;
+    }
+    
+    .delete-warning-box {
+        padding: 20px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .delete-btn, .cancel-btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}

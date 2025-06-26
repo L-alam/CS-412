@@ -58,6 +58,10 @@ class Trip(models.Model):
         '''Add a user as a member of this trip'''
         if not self.is_member(user):
             TripMember.objects.create(trip=self, user=user, role=role)
+
+    def get_status_choices(self):
+        '''Return status choices for use in templates'''
+        return Trip.STATUS_CHOICES
             
 
 
