@@ -86,8 +86,10 @@ class ShowTripDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         context['is_organizer'] = self.object.members.filter(user=self.request.user, role='organizer').exists()
         context['flight_search_form'] = FlightSearchForm()
-        context['hotel_search_form'] = HotelSearchForm()  # Add this line
+        context['hotel_search_form'] = HotelSearchForm()
+        context['list_items'] = self.object.list_items.all()  # Add this line
         return context
+
 
 
 
@@ -664,43 +666,55 @@ class AddHotelToListView(View):
         
         try:
             data = json.loads(request.body)
+            print(f"Received hotel data: {data}")  # Debug line
             
-            # Validate required fields
-            required_fields = ['name', 'rating', 'price_per_night', 'total_price']
-            for field in required_fields:
-                if field not in data:
-                    return JsonResponse({'error': f'Missing required field: {field}'}, status=400)
+            # Get required fields with defaults to match the flight pattern
+            name = data.get('name', 'Unknown Hotel')
+            rating = data.get('rating', 0)
+            star_rating = data.get('star_rating', 0)
+            price_per_night = data.get('price_per_night', 'N/A')
+            price_per_night_value = data.get('price_per_night_value', 0)
+            total_price = data.get('total_price', 'N/A')
+            total_price_value = data.get('total_price_value', 0)
+            amenities = data.get('amenities', [])
+            property_token = data.get('property_token', '')
+            reviews = data.get('reviews', 0)
             
-            # Create description with rating and amenities
-            amenities_text = ', '.join(data.get('amenities', [])[:3])
-            if len(data.get('amenities', [])) > 3:
-                amenities_text += f" +{len(data['amenities']) - 3} more"
+            # Create description with rating and amenities (like flight description)
+            amenities_text = ', '.join(amenities[:3])
+            if len(amenities) > 3:
+                amenities_text += f" +{len(amenities) - 3} more"
             
-            description = f"★ {data['rating']} • {data.get('star_rating', 'N/A')} stars"
+            description = f"★ {rating} • {star_rating} stars"
             if amenities_text:
                 description += f" • {amenities_text}"
             
-            # Create the list item
+            # Use the total price value for the price field (like flights use price)
+            price_to_store = total_price_value if total_price_value > 0 else price_per_night_value
+            
+            # Create the list item (same pattern as flight)
             list_item = TripListItem.objects.create(
                 trip=trip,
                 added_by=request.user,
                 item_type='hotel',
-                title=data['name'],
+                title=name,
                 description=description,
-                price=data.get('total_price_value', data.get('price_per_night_value', 0)),
+                price=price_to_store,
                 item_data={
-                    'name': data['name'],
-                    'rating': data['rating'],
-                    'star_rating': data.get('star_rating', 0),
-                    'price_per_night': data['price_per_night'],
-                    'price_per_night_value': data.get('price_per_night_value', 0),
-                    'total_price': data['total_price'],
-                    'total_price_value': data.get('total_price_value', 0),
-                    'amenities': data.get('amenities', []),
-                    'property_token': data.get('property_token', ''),
-                    'reviews': data.get('reviews', 0),
+                    'name': name,
+                    'rating': rating,
+                    'star_rating': star_rating,
+                    'price_per_night': price_per_night,
+                    'price_per_night_value': price_per_night_value,
+                    'total_price': total_price,
+                    'total_price_value': total_price_value,
+                    'amenities': amenities,
+                    'property_token': property_token,
+                    'reviews': reviews,
                 }
             )
+            
+            print(f"Successfully created hotel list item: {list_item.id}")  # Debug line
             
             return JsonResponse({
                 'success': True,
@@ -708,9 +722,13 @@ class AddHotelToListView(View):
                 'item_id': list_item.id
             })
             
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            print(f"JSON decode error: {e}")
             return JsonResponse({'error': 'Invalid JSON data'}, status=400)
         except Exception as e:
+            print(f"Error creating hotel list item: {e}")
+            import traceback
+            traceback.print_exc()
             return JsonResponse({'error': str(e)}, status=500)
 
 
@@ -753,39 +771,13 @@ class AddCustomItemToListView(View):
             return JsonResponse({
                 'success': True,
                 'message': 'Item added to list!',
-                'item_id': list_item.id,
-                'item_html': self._render_list_item(list_item)
+                'item_id': list_item.id
             })
             
         except json.JSONDecodeError:
             return JsonResponse({'error': 'Invalid JSON data'}, status=400)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
-    
-    def _render_list_item(self, item):
-        '''Render HTML for a list item'''
-        price_display = f"${item.price}" if item.price else ""
-        
-        if item.item_type == 'flight':
-            icon = "✈️"
-        elif item.item_type == 'hotel':
-            icon = "🏨"
-        else:
-            icon = "📝"
-        
-        return f'''
-        <div class="list-item saved-item" data-item-id="{item.id}">
-            <div class="item-main">
-                <div class="item-title">{icon} {item.title}</div>
-                <div class="item-description">{item.description}</div>
-                <small class="added-info">Added by {item.added_by.username} on {item.added_date.strftime('%b %d, %Y')}</small>
-            </div>
-            {f'<div class="item-price">{price_display}</div>' if price_display else ''}
-            <div class="item-actions">
-                <button class="btn-delete" onclick="removeListItem({item.id})">Delete</button>
-            </div>
-        </div>
-        '''
 
 
 class RemoveListItemView(View):

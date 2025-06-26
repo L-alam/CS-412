@@ -237,12 +237,13 @@
             </div>
         </div>
     </div>
-    
+
+
     <!-- List Tab Content -->
     <div class="tab-content" id="list-tab">
         <div class="tab-header">
-            <h3>Custom List</h3>
-            <button class="add-btn" onclick="showAddItemForm()">+ Add Item</button>
+            <h3>Trip List</h3>
+            <button class="add-btn" onclick="showAddItemForm()">+ Add Custom Item</button>
         </div>
         
         <!-- Add Item Form (hidden by default) -->
@@ -259,28 +260,33 @@
             </div>
         </div>
         
-        <div class="content-list">
-            <div class="list-item custom-item">
+        <div class="content-list" id="trip-list-content">
+            <!-- Display existing saved items -->
+            {% for item in list_items %}
+            <div class="list-item saved-item" data-item-id="{{ item.id }}">
                 <div class="item-main">
-                    <div class="item-title">Visit Eiffel Tower</div>
-                    <div class="item-description">Must-see landmark, go during sunset</div>
+                    <div class="item-title">
+                        {% if item.item_type == 'flight' %}✈️{% elif item.item_type == 'hotel' %}🏨{% else %}📝{% endif %}
+                        {{ item.title }}
+                    </div>
+                    <div class="item-description">{{ item.description }}</div>
+                    <small class="added-info">Added by {{ item.added_by.username }} on {{ item.added_date|date:"M j, Y" }}</small>
                 </div>
+                {% if item.price %}
+                <div class="item-price">${{ item.price }}</div>
+                {% endif %}
                 <div class="item-actions">
-                    <button class="btn-edit">Edit</button>
-                    <button class="btn-delete">Delete</button>
+                    {% if item.added_by == request.user or is_organizer %}
+                    <button class="btn-delete" onclick="removeListItem({{ item.id }})">Delete</button>
+                    {% endif %}
                 </div>
             </div>
-            
-            <div class="list-item custom-item">
-                <div class="item-main">
-                    <div class="item-title">Book restaurant reservation</div>
-                    <div class="item-description">Le Comptoir du Relais - need to call ahead</div>
-                </div>
-                <div class="item-actions">
-                    <button class="btn-edit">Edit</button>
-                    <button class="btn-delete">Delete</button>
-                </div>
+            {% empty %}
+            <div class="empty-list" id="empty-list-message">
+                <p>No items in your trip list yet.</p>
+                <p>Add flights, hotels, or custom items from the search results above!</p>
             </div>
+            {% endfor %}
             
             <!-- Pagination -->
             <div class="pagination">
@@ -289,8 +295,9 @@
                 <button class="page-btn" disabled>Next →</button>
             </div>
         </div>
-    </div>
+    </div>  
 </div>
+
 
 <!-- Trip Details -->
 <div class="trip-details">
@@ -444,14 +451,26 @@ function createFlightCard(flight) {
                     <span class="airline-name">${flight.airline}</span>
                 </div>
                 <div class="flight-price">
-                    <span class="price">${flight.price}</span>
+                    <span class="price">$${flight.price}</span>
                     <span class="price-label">per person</span>
                 </div>
             </div>
         </div>
         
         <div class="flight-actions">
-            <button class="add-to-list-btn" onclick="addFlightToList('${flight.booking_token}')">
+            <button class="add-to-list-btn" onclick="addFlightToList({
+                title: '${flight.departure_code} → ${flight.arrival_code}',
+                departure_code: '${flight.departure_code}',
+                arrival_code: '${flight.arrival_code}',
+                departure_time: '${flight.departure_time}',
+                arrival_time: '${flight.arrival_time}',
+                duration_formatted: '${flight.duration_formatted}',
+                airline: '${flight.airline}',
+                price: ${flight.price},
+                stops: ${flight.stops},
+                stops_text: '${stopsText}',
+                booking_token: '${flight.booking_token}'
+            })">
                 + Add to List
             </button>
         </div>
@@ -503,11 +522,30 @@ document.getElementById('next-flights').addEventListener('click', function() {
     }
 });
 
-function addFlightToList(bookingToken) {
-    // Placeholder for adding flight to trip list
-    // This will be implemented later
-    console.log('Adding flight to list:', bookingToken);
-    alert('Flight added to list! (Feature will be implemented later)');
+function addFlightToList(flightData) {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(`{% url 'add_flight_to_list' trip.pk %}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify(flightData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage(data.message);
+            refreshListTab();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to add flight'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to add flight to list');
+    });
 }
 
 // Custom list functionality (existing code)
@@ -530,25 +568,33 @@ function addCustomItem() {
         return;
     }
     
-    // Create new list item
-    const contentList = document.querySelector('#list-tab .content-list');
-    const pagination = contentList.querySelector('.pagination');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     
-    const newItem = document.createElement('div');
-    newItem.className = 'list-item custom-item';
-    newItem.innerHTML = `
-        <div class="item-main">
-            <div class="item-title">${title}</div>
-            <div class="item-description">${description}</div>
-        </div>
-        <div class="item-actions">
-            <button class="btn-edit">Edit</button>
-            <button class="btn-delete" onclick="this.parentElement.parentElement.remove()">Delete</button>
-        </div>
-    `;
-    
-    contentList.insertBefore(newItem, pagination);
-    hideAddItemForm();
+    fetch(`{% url 'add_custom_item' trip.pk %}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify({
+            title: title,
+            description: description
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage(data.message);
+            hideAddItemForm();
+            refreshListTab();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to add item'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to add custom item');
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -700,6 +746,10 @@ function createHotelCard(hotel, nights) {
     const displayAmenities = hotel.amenities.slice(0, 3);
     const moreAmenities = hotel.amenities.length > 3 ? `+${hotel.amenities.length - 3} more` : '';
     
+    // Escape quotes in hotel name and amenities for JSON
+    const escapedName = hotel.name.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    const escapedAmenities = JSON.stringify(hotel.amenities).replace(/'/g, "\\'");
+    
     card.innerHTML = `
         <div class="hotel-card-content">
             <div class="hotel-image">
@@ -737,7 +787,7 @@ function createHotelCard(hotel, nights) {
         </div>
         
         <div class="hotel-actions">
-            <button class="add-to-list-btn" onclick="addHotelToList('${hotel.property_token}')">
+            <button class="add-to-list-btn" onclick="addHotelToListWrapper('${escapedName}', ${hotel.rating || 0}, ${hotel.star_rating || 0}, '${hotel.price_per_night}', ${hotel.price_per_night_value || 0}, '${hotel.total_price}', ${hotel.total_price_value || 0}, '${escapedAmenities}', '${hotel.property_token}', ${hotel.reviews || 0})">
                 + Add to List
             </button>
         </div>
@@ -745,6 +795,40 @@ function createHotelCard(hotel, nights) {
     
     return card;
 }
+
+
+function addHotelToListWrapper(name, rating, starRating, pricePerNight, pricePerNightValue, totalPrice, totalPriceValue, amenitiesJson, propertyToken, reviews) {
+    console.log('addHotelToListWrapper called with:', {
+        name, rating, starRating, pricePerNight, pricePerNightValue, 
+        totalPrice, totalPriceValue, amenitiesJson, propertyToken, reviews
+    });
+    
+    // Parse amenities back from JSON string
+    let amenities = [];
+    try {
+        amenities = JSON.parse(amenitiesJson);
+    } catch (e) {
+        console.error('Error parsing amenities:', e);
+        amenities = [];
+    }
+    
+    const hotelData = {
+        name: name,
+        rating: rating,
+        star_rating: starRating,
+        price_per_night: pricePerNight,
+        price_per_night_value: pricePerNightValue,
+        total_price: totalPrice,
+        total_price_value: totalPriceValue,
+        amenities: amenities,
+        property_token: propertyToken,
+        reviews: reviews
+    };
+    
+    console.log('Calling addHotelToList with:', hotelData);
+    addHotelToList(hotelData);
+}
+
 
 function generateStarRating(rating) {
     if (!rating) return '';
@@ -783,11 +867,177 @@ document.getElementById('next-hotels').addEventListener('click', function() {
     }
 });
 
-function addHotelToList(propertyToken) {
-    // Placeholder for adding hotel to trip list
-    console.log('Adding hotel to list:', propertyToken);
-    alert('Hotel added to list! (Feature will be implemented later)');
+function addHotelToList(hotelData) {
+    console.log('addHotelToList called with:', hotelData);
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(`{% url 'add_hotel_to_list' trip.pk %}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify(hotelData)
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+            showSuccessMessage(data.message);
+            refreshListTab();
+        } else {
+            console.error('Server error:', data.error);
+            alert('Error: ' + (data.error || 'Failed to add hotel'));
+        }
+    })
+    .catch(error => {
+        console.error('Network error:', error);
+        alert('Failed to add hotel to list: ' + error.message);
+    });
 }
+
+function removeListItem(itemId) {
+    if (!confirm('Are you sure you want to remove this item from the list?')) {
+        return;
+    }
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(`/trip/{{ trip.pk }}/remove_list_item/${itemId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessMessage(data.message);
+            // Remove the item from the DOM
+            const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
+            if (itemElement) {
+                itemElement.remove();
+            }
+            
+            // Check if list is empty and show empty message
+            const remainingItems = document.querySelectorAll('.saved-item');
+            if (remainingItems.length === 0) {
+                showEmptyListMessage();
+            }
+        } else {
+            alert('Error: ' + (data.error || 'Failed to remove item'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to remove item');
+    });
+}
+
+// Function to refresh the list tab (reload page or fetch updated content)
+function refreshListTab() {
+    // Simple approach: reload the page
+    // For a more sophisticated approach, you could fetch just the list content via AJAX
+    location.reload();
+}
+
+// Function to show success message
+function showSuccessMessage(message) {
+    // Create a temporary success message
+    const successDiv = document.createElement('div');
+    successDiv.className = 'success-message';
+    successDiv.textContent = message;
+    successDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 4px;
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    document.body.appendChild(successDiv);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        successDiv.remove();
+    }, 3000);
+}
+
+
+// Function to show empty list message
+function showEmptyListMessage() {
+    const contentList = document.getElementById('trip-list-content');
+    const pagination = contentList.querySelector('.pagination');
+    
+    const emptyMessage = document.createElement('div');
+    emptyMessage.className = 'empty-list';
+    emptyMessage.id = 'empty-list-message';
+    emptyMessage.innerHTML = `
+    <p>No items in your trip list yet.</p>
+    <p>Add flights, hotels, or custom items from the search results above!</p>
+`;
+
+contentList.insertBefore(emptyMessage, pagination);
+}
+
+// Add CSS animation for success message
+const style = document.createElement('style');
+style.textContent = `
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.success-message {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.saved-item {
+    border-left: 4px solid #28a745;
+    background: #f8f9fa;
+}
+
+.saved-item:hover {
+    background: #e9ecef;
+}
+
+.added-info {
+    color: #6c757d;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+}
+
+.empty-list {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+    font-style: italic;
+}
+
+.empty-list p {
+    margin-bottom: 15px;
+}
+`;
+document.head.appendChild(style);
 
 </script>
 {% endif %}

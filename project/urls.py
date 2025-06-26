@@ -32,4 +32,10 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='project/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='logout_confirmation'), name='logout'),
     path('logout_confirmation/', TemplateView.as_view(template_name='project/logged_out.html'), name='logout_confirmation'),
+    
+    #Trip List
+    path('trip/<int:trip_pk>/add_flight_to_list/', AddFlightToListView.as_view(), name='add_flight_to_list'),
+    path('trip/<int:trip_pk>/add_hotel_to_list/', AddHotelToListView.as_view(), name='add_hotel_to_list'),
+    path('trip/<int:trip_pk>/add_custom_item/', AddCustomItemToListView.as_view(), name='add_custom_item'),
+    path('trip/<int:trip_pk>/remove_list_item/<int:item_id>/', RemoveListItemView.as_view(), name='remove_list_item'),
 ]
