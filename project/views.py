@@ -1,3 +1,5 @@
+# File: views.py
+# Author: Labeeb Alam (lalam@bu.edu), 6/26/2025
 from django.shortcuts import render
 from django.views.generic import ListView, DetailView, CreateView, View
 from .models import *

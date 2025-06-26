@@ -1,3 +1,6 @@
+# File: models.py
+# Author: Labeeb Alam (lalam@bu.edu), 6/26/2025
+
 from django.db import models
 from django.contrib.auth.models import User
 import django.db.models.deletion

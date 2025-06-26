@@ -1,3 +1,6 @@
+# File: admin.py
+# Author: Labeeb Alam (lalam@bu.edu), 6/26/2025
+
 from django.contrib import admin
 from .models import *
 

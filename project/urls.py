@@ -1,3 +1,6 @@
+# File: urls.py
+# Author: Labeeb Alam (lalam@bu.edu), 6/26/2025
+
 from django.urls import path
 from .views import * 
 from django.contrib.auth import views as auth_views

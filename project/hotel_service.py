@@ -1,3 +1,5 @@
+# File: hotel_service.py
+# Author: Labeeb Alam (lalam@bu.edu), 6/26/2025
 import requests
 import os
 from django.conf import settings

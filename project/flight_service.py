@@ -1,4 +1,5 @@
-# Make sure you have created project/flight_service.py
+# File: flight_service.py
+# Author: Labeeb Alam (lalam@bu.edu), 6/26/2025
 
 import requests
 import os
