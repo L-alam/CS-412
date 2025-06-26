@@ -437,6 +437,13 @@ class FlightSearchView(View):
         trip_pk = kwargs.get('trip_pk')
         trip = get_object_or_404(Trip, pk=trip_pk)
         
+        # Check if user has permission to view this trip
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+            
+        if not trip.is_member(request.user):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+        
         # Parse JSON data from request
         try:
             data = json.loads(request.body)
