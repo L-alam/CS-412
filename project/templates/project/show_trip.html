@@ -14,36 +14,86 @@
     <p>{{ trip.description }}</p>
 </div>
 
-<!-- Plans Section -->
-<div class="plans-section">
-    <h2>Plans</h2>
-    <div class="plans-buttons">
-        {% for plan in trip.get_plans %}
-            <button class="plan-btn {% if plan.is_selected %}selected{% endif %}">
-                {{ plan.name }}
-            </button>
-        {% empty %}
-            <!-- No plans exist, show create button -->
-        {% endfor %}
-        
-        <!-- Always show the create new plan button -->
-        <button class="plan-btn new-plan-btn" onclick="location.href='{% url 'create_plan' trip.pk %}'">+ Create New Plan</button>
+<!-- Trip Members Section -->
+<div class="members-section">
+    <div class="members-header">
+        <div class="members-display">
+            <span class="members-label">Trip Members:</span>
+            <div class="members-list">
+                {% for member in trip.get_members %}
+                <div class="member-tag">
+                    {% if member.user.trip_profile.first %}
+                        {{ member.user.trip_profile.first.first_name }} {{ member.user.trip_profile.first.last_name }}
+                    {% else %}
+                        {{ member.user.username }}
+                    {% endif %}
+                    {% if is_organizer and member.user != request.user %}
+                        <form method="POST" action="{% url 'remove_trip_member' trip.pk member.user.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="remove-member-x" onclick="return confirm('Remove {{ member.user.username }} from this trip?')">×</button>
+                        </form>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="member-tag empty">No members yet</div>
+                {% endfor %}
+            </div>
+        </div>
+        <a href="{% url 'invite_friends' trip.pk %}" class="btn btn-primary">+ Add Friends</a>
     </div>
 </div>
 
-<!-- Destination Section -->
-<div class="destination-card">
-    <div class="destination-header">
-        <h4>{{ destination.city }}</h4>
-        <span class="country">{{ destination.country }}</span>
+<!-- Plans Section -->
+<div class="plans-section">
+    <div class="plans-header">
+        <div class="plans-display">
+            <span class="plans-label">Plans:</span>
+            <div class="plans-list">
+                {% for plan in trip.get_plans %}
+                <div class="plan-tag {% if plan.is_selected %}selected{% endif %}" data-plan-id="{{ plan.pk }}">
+                    {{ plan.name }}
+                    {% if plan.is_selected %}
+                        <span class="selected-icon">✓</span>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="plan-tag empty">No plans yet</div>
+                {% endfor %}
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="location.href='{% url 'create_plan' trip.pk %}'">+ Create Plan</button>
     </div>
-    <div class="destination-details">
-        {% if destination.nights_staying %}
-            <span class="detail">{{ destination.nights_staying }} nights</span>
-        {% endif %}
-        {% if destination.estimated_cost %}
-            <span class="detail cost">${{ destination.estimated_cost }}</span>
-        {% endif %}
+</div>
+
+<!-- Destinations Section -->
+<div class="destinations-section">
+    <div class="destinations-header">
+        <span class="destinations-label">Destinations:</span>
+        <div class="destinations-content">
+            {% for plan in trip.get_plans %}
+            <div class="plan-destinations" data-plan="{{ plan.pk }}">
+                {% if plan.get_destinations %}
+                    <div class="destinations-list">
+                        {% for destination in plan.get_destinations %}
+                        <div class="destination-tag">
+                            {{ destination.city }}, {{ destination.country }}
+                            {% if destination.nights_staying %}
+                                <span class="detail">{{ destination.nights_staying }}n</span>
+                            {% endif %}
+                            {% if destination.estimated_cost %}
+                                <span class="detail cost">${{ destination.estimated_cost }}</span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="destination-tag empty">No destinations yet</div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="destination-tag empty">Create a plan first</div>
+            {% endfor %}
+        </div>
     </div>
 </div>
 
@@ -481,6 +531,58 @@ function addCustomItem() {
     hideAddItemForm();
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+    const planTags = document.querySelectorAll('.plan-tag:not(.empty)');
+    const planDestinations = document.querySelectorAll('.plan-destinations');
+    const destinationsSection = document.querySelector('.destinations-section');
+    
+    // Show destinations for selected plan on page load
+    const selectedPlan = document.querySelector('.plan-tag.selected');
+    if (selectedPlan) {
+        const planId = selectedPlan.getAttribute('data-plan-id');
+        showDestinationsForPlan(planId);
+    } else {
+        // Hide destinations section if no plan is selected
+        destinationsSection.style.display = 'none';
+    }
+    
+    planTags.forEach(tag => {
+        tag.addEventListener('click', function() {
+            const planId = this.getAttribute('data-plan-id');
+            
+            // Remove selected class from all plans
+            planTags.forEach(t => t.classList.remove('selected'));
+            
+            // Add selected class to clicked plan
+            this.classList.add('selected');
+            
+            // Update selected icon
+            planTags.forEach(t => {
+                const icon = t.querySelector('.selected-icon');
+                if (icon) icon.remove();
+            });
+            
+            if (!this.querySelector('.selected-icon')) {
+                this.insertAdjacentHTML('beforeend', '<span class="selected-icon">✓</span>');
+            }
+            
+            // Show destinations section and destinations for this plan
+            destinationsSection.style.display = 'block';
+            showDestinationsForPlan(planId);
+        });
+    });
+    
+    function showDestinationsForPlan(planId) {
+        // Hide all plan destinations
+        planDestinations.forEach(pd => pd.classList.remove('active'));
+        
+        // Show destinations for selected plan
+        const targetDestinations = document.querySelector(`[data-plan="${planId}"]`);
+        if (targetDestinations) {
+            targetDestinations.classList.add('active');
+        }
+    }
+});
 
 </script>
 {% endif %}
@@ -489,7 +591,7 @@ function addCustomItem() {
 
 .destinations-section {
     margin-bottom: 30px;
-    padding: 20px;
+    padding: 15px 20px;
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -1148,6 +1250,279 @@ function addCustomItem() {
         margin: 0;
         align-self: flex-end;
     }
+}
+
+.members-section {
+    margin-bottom: 30px;
+    padding: 15px 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.members-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.members-display {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.members-label {
+    font-weight: bold;
+    color: #333;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+.members-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.member-tag {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 14px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    position: relative;
+}
+
+.member-tag.empty {
+    color: #666;
+    font-style: italic;
+}
+
+.organizer-icon {
+    color: #ffc107;
+    font-size: 12px;
+    margin-left: 2px;
+}
+
+.remove-member-x {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 0;
+    margin-left: 5px;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+}
+
+.remove-member-x:hover {
+    background: #dc3545;
+    color: white;
+}
+
+/* Updated Plans Section Styles - More Condensed */
+.plans-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.plans-display {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.plans-label {
+    font-weight: bold;
+    color: #333;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+.plans-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.plan-tag {
+    background: #f8f9fa;
+    border: 2px solid #dee2e6;
+    border-radius: 20px;
+    padding: 8px 15px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s;
+    user-select: none;
+}
+
+.plan-tag:hover {
+    border-color: #3b5998;
+    background: #f0f2ff;
+}
+
+.plan-tag.selected {
+    background: #3b5998;
+    color: white;
+    border-color: #3b5998;
+}
+
+.plan-tag.empty {
+    color: #666;
+    font-style: italic;
+    cursor: default;
+}
+
+.plan-tag.empty:hover {
+    border-color: #dee2e6;
+    background: #f8f9fa;
+}
+
+.selected-icon {
+    font-size: 12px;
+    margin-left: 2px;
+}
+
+
+.destinations-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.destinations-label {
+    font-weight: bold;
+    color: #333;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+.destinations-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 18px;
+}
+
+.destinations-content {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.plan-destinations {
+    display: none;
+}
+
+.plan-destinations.active {
+    display: block;
+}
+
+.destinations-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.destinations-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.destination-tag {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 14px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.destination-tag.empty {
+    color: #666;
+    font-style: italic;
+}
+
+.destination-card {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    padding: 8px 15px;
+    font-size: 14px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.destination-header {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.destination-header h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.country {
+    color: #666;
+    font-size: 12px;
+}
+
+.destination-details {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.detail {
+    background: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 11px;
+    color: #666;
+    border: 1px solid #dee2e6;
+    margin-left: 3px;
+}
+
+.detail.cost {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.no-destinations, .no-plans-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
 }
 </style>
 {% endblock %}
